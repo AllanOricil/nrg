@@ -16,7 +16,10 @@ async function run(config: Config): Promise<void> {
   await startNodeRed(config);
 }
 
-export function startWatcher(config: Config, configFilepath: string): void {
+async function startWatcher(
+  config: Config,
+  configFilepath: string,
+): Promise<number> {
   let debounceTimeout: NodeJS.Timeout;
   let _config = config;
   const onChange = async (
@@ -44,4 +47,9 @@ export function startWatcher(config: Config, configFilepath: string): void {
       }
     });
   }
+
+  const port = await detectPort(config.watch?.port || 3000);
+  return port;
 }
+
+export { startWatcher };

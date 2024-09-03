@@ -16,9 +16,9 @@ let nodeRedProcess: ChildProcess;
 let webSocket: WebSocket.Server;
 
 function setupWebSocket(config: Config) {
-  if (!webSocket) {
-    console.log("Setting up WebSocket server...");
-    webSocket = new WebSocketServer({ port: config.watch?.port });
+  if (!webSocket && config.watch?.port) {
+    console.log(`Setting up WebSocket server on port ${config.watch.port}`);
+    webSocket = new WebSocketServer({ port: config.watch.port });
 
     webSocket.on("connection", (ws) => {
       console.log("Client connected to WebSocket");
@@ -110,9 +110,7 @@ async function startNodeRed(config: Config) {
       }
     });
 
-    if (!webSocket) {
-      setupWebSocket(config);
-    }
+    setupWebSocket(config);
   }
 }
 
