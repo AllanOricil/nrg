@@ -22,7 +22,7 @@
     "prepare": "husky install"
   },
   "author": "allanoricil <allanoricilcos@outlook.com>",
-  "license": "ISC",
+  "license": "MIT",
   "publishConfig": {
     "access": "public"
   },
