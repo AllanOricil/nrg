@@ -1,0 +1,15 @@
+.github
+.husky
+.gitignore
+.eslintrc.json
+.eslintignore
+.prettierignore
+.npmrc
+.releaserc.json
+docs
+node_modules
+src
+tsconfig.json
+commitlint.config.js
+eslint.config.js
+rollup.config.js
