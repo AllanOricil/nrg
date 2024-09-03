@@ -1,5 +1,5 @@
 {
-  "name": "@nrg/core",
+  "name": "@allanoricil/nrg-core",
   "version": "0.0.0",
   "description": "This package can be used to build Node-RED nodes made with the nrg cli.",
   "type": "module",
