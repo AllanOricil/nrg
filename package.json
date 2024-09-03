@@ -23,6 +23,9 @@
   },
   "author": "allanoricil <allanoricilcos@outlook.com>",
   "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "cheerio": "^1.0.0",
     "deepmerge": "^4.3.1",
