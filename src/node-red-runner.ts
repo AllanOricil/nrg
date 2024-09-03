@@ -3,7 +3,7 @@ import { spawn, type ChildProcess } from "child_process";
 import deepmerge from "deepmerge";
 import killPort from "kill-port";
 import detectPort from "detect-port";
-import WebSocket from "ws";
+import WebSocket, { WebSocketServer } from "ws";
 import { type Config } from "./config.js";
 import {
   PROJECT_ROOT_DIRECTORY,
@@ -13,14 +13,14 @@ import {
 } from "./constants.js";
 
 let nodeRedProcess: ChildProcess;
-let wss: WebSocket.Server;
+let webSocket: WebSocket.Server;
 
 function setupWebSocket(config: Config) {
-  if (!wss) {
+  if (!webSocket) {
     console.log("Setting up WebSocket server...");
-    wss = new WebSocket.Server({ port: config.watch?.port });
+    webSocket = new WebSocketServer({ port: config.watch?.port });
 
-    wss.on("connection", (ws) => {
+    webSocket.on("connection", (ws) => {
       console.log("Client connected to WebSocket");
 
       ws.on("message", (message) => {
@@ -89,7 +89,7 @@ async function startNodeRed(config: Config) {
           `Server now running at http://127.0.0.1:${config.nodeRed.uiPort}/`,
         )
       ) {
-        wss.clients.forEach((client) => {
+        webSocket.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
             client.send("refresh");
           }
@@ -110,7 +110,7 @@ async function startNodeRed(config: Config) {
       }
     });
 
-    if (!wss) {
+    if (!webSocket) {
       setupWebSocket(config);
     }
   }
