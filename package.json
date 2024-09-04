@@ -1,6 +1,6 @@
 {
   "name": "@allanoricil/nrg-core",
-  "version": "0.0.0",
+  "version": "0.0.0-beta.8",
   "description": "This package can be used to build Node-RED nodes made with the nrg cli.",
   "type": "module",
   "module": "dist/index.js",
@@ -13,13 +13,13 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "rollup -c",
+    "build": "rollup -c rollup.config.js",
     "release": "semantic-release",
     "lint": "eslint '**/*.ts'",
     "lint:fix": "eslint --fix '**/*.ts'",
     "format": "prettier '**/*.{json,ts}'",
     "format:fix": "prettier --write '**/*.{json,ts}'",
-    "prepare": "husky"
+    "prepublish": "npm run build"
   },
   "author": "allanoricil <allanoricilcos@outlook.com>",
   "license": "MIT",
@@ -27,6 +27,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@allanoricil/node-red-node": "^0.0.0-beta.11",
     "cheerio": "^1.0.0",
     "deepmerge": "^4.3.1",
     "detect-port": "^1.6.1",
@@ -36,6 +37,7 @@
     "kill-port": "^2.0.1",
     "lilconfig": "^3.1.2",
     "oclif": "^4.14.29",
+    "open": "^10.1.0",
     "pkg-dir": "^8.0.0",
     "ws": "^8.18.0"
   },
@@ -62,7 +64,6 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",
     "globals": "^15.9.0",
-    "husky": "^9.1.5",
     "lint-staged": "^15.2.0",
     "node-red": "^4.0.2",
     "prettier": "^3.3.3",

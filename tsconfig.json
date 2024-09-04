@@ -1,16 +1,18 @@
 {
   "compilerOptions": {
-    "declaration": true,
-    "moduleResolution": "Node",
     "module": "ES2022",
-    "outDir": "dist",
-    "rootDir": "src",
+    "target": "ES2022",
+    "moduleResolution": "Node",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
     "strict": true,
-    "target": "es2022",
-    "allowSyntheticDefaultImports": true,
+    "noEmit": true,
     "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true
   },
   "include": ["./src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["/node_modules/", "dist"]
 }

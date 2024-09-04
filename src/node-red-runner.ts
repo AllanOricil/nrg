@@ -5,6 +5,7 @@ import killPort from "kill-port";
 import detectPort from "detect-port";
 import WebSocket, { WebSocketServer } from "ws";
 import { type Config } from "./config.js";
+import open from "open";
 import {
   PROJECT_ROOT_DIRECTORY,
   NODE_RED_EXECUTABLE,
@@ -80,7 +81,7 @@ async function startNodeRed(config: Config) {
   const { executable, args } = buildCommand(config.debug);
   nodeRedProcess = spawn(executable, args);
   if (nodeRedProcess) {
-    nodeRedProcess.stdout?.on("data", (data) => {
+    nodeRedProcess.stdout?.on("data", async (data) => {
       const message = data.toString().trim();
       console.log(`Node-RED: ${message}`);
 
@@ -89,11 +90,17 @@ async function startNodeRed(config: Config) {
           `Server now running at http://127.0.0.1:${config.nodeRed.uiPort}/`,
         )
       ) {
-        webSocket.clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send("refresh");
-          }
-        });
+        if (webSocket) {
+          webSocket.clients?.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send("refresh");
+            }
+          });
+        }
+
+        if (config.open) {
+          await open(`http://127.0.0.1:${config.nodeRed.uiPort}`);
+        }
       }
     });
 

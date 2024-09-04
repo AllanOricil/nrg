@@ -14,6 +14,7 @@ let configFilepath: string;
 interface Config {
   version: string;
   debug: boolean;
+  open: boolean;
   watch: {
     port?: number;
     paths: string[];
