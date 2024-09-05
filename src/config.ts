@@ -13,11 +13,13 @@ let configFilepath: string;
 
 interface Config {
   version: string;
-  debug: boolean;
-  open: boolean;
-  watch: {
+  dev: {
+    debug: boolean;
+    open: boolean;
     port?: number;
-    paths: string[];
+    watch: {
+      paths: string[];
+    };
   };
   build: {
     server: BuildOptions;

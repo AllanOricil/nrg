@@ -217,8 +217,8 @@ async function bundleClient(config: Config): Promise<void> {
     });
   }
 
-  if (config.watch?.port) {
-    console.log(`attach wss connection script using port ${config.watch.port}`);
+  if (config.dev.port) {
+    console.log(`attach wss connection script using port ${config.dev.port}`);
     const refreshScriptTemplate = Handlebars.compile(
       fs.readFileSync(
         path.resolve(BUILDER_TEMPLATES, "client", "refresh-script.handlebars"),
@@ -226,7 +226,7 @@ async function bundleClient(config: Config): Promise<void> {
       ),
     );
     const renderedRefreshScript = refreshScriptTemplate({
-      port: config.watch.port,
+      port: config.dev.port,
     });
     fs.appendFileSync(clientHtmlPath, renderedRefreshScript, {
       encoding: "utf-8",

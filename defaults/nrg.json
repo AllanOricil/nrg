@@ -1,25 +1,27 @@
 {
   "version": "0.0.0",
-  "debug": false,
-  "open": true,
-  "watch": {
+  "dev": {
+    "debug": false,
+    "open": true,
     "port": null,
-    "paths": [
-      "src",
-      "package.json",
-      "nrg.config.js",
-      "nrg.config.js",
-      "nrg.config.cjs",
-      ".nrgrc.json",
-      ".nrgrc.js",
-      ".nrgrc.cjs",
-      ".nrgrc.js",
-      ".config/nrgrc",
-      ".config/nrgrc.json",
-      ".config/nrgrc.js",
-      ".config/nrgrc.cjs",
-      ".config/nrgrc.js"
-    ]
+    "watch": {
+      "paths": [
+        "src",
+        "package.json",
+        "nrg.config.js",
+        "nrg.config.js",
+        "nrg.config.cjs",
+        ".nrgrc.json",
+        ".nrgrc.js",
+        ".nrgrc.cjs",
+        ".nrgrc.js",
+        ".config/nrgrc",
+        ".config/nrgrc.json",
+        ".config/nrgrc.js",
+        ".config/nrgrc.cjs",
+        ".config/nrgrc.js"
+      ]
+    }
   },
   "build": {
     "server": {

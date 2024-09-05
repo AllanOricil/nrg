@@ -1,10 +1,10 @@
 import fs from "fs-extra";
 import { spawn, type ChildProcess } from "child_process";
 import deepmerge from "deepmerge";
-import killPort from "kill-port";
 import detectPort from "detect-port";
-import WebSocket, { WebSocketServer } from "ws";
+import { killSpawnedProcess } from "./assassin";
 import { type Config } from "./config.js";
+import WebSocket from "ws";
 import open from "open";
 import {
   PROJECT_ROOT_DIRECTORY,
@@ -14,22 +14,6 @@ import {
 } from "./constants.js";
 
 let nodeRedProcess: ChildProcess;
-let webSocket: WebSocket.Server;
-
-function setupWebSocket(config: Config) {
-  if (!webSocket && config.watch?.port) {
-    console.log(`Setting up WebSocket server on port ${config.watch.port}`);
-    webSocket = new WebSocketServer({ port: config.watch.port });
-
-    webSocket.on("connection", (ws) => {
-      console.log("Client connected to WebSocket");
-
-      ws.on("message", (message) => {
-        console.log("Received message:", message);
-      });
-    });
-  }
-}
 
 function setupNodeRedDirectory(config: Config) {
   if (!fs.existsSync(NODE_RED_DIRECTORY)) {
@@ -49,17 +33,6 @@ function setupNodeRedDirectory(config: Config) {
   );
 }
 
-async function killNodeRedProcess(config: Config) {
-  if (nodeRedProcess) {
-    nodeRedProcess.kill();
-  } else {
-    const port = await detectPort(config.nodeRed?.uiPort);
-    if (port !== config.nodeRed?.uiPort) {
-      await killPort(config.nodeRed?.uiPort);
-    }
-  }
-}
-
 function buildCommand(debug: boolean) {
   const args = [
     ...(debug ? ["--inspect"] : []),
@@ -74,32 +47,39 @@ function buildCommand(debug: boolean) {
   };
 }
 
-async function startNodeRed(config: Config) {
-  await killNodeRedProcess(config);
+async function startNodeRed(config: Config, listener: WebSocket.Server) {
+  if (nodeRedProcess) {
+    console.log("Stopping Node-RED");
+    await killSpawnedProcess(nodeRedProcess);
+  }
+
+  const port = await detectPort(config.nodeRed.uiPort);
+  if (port !== config.nodeRed.uiPort) {
+    console.log(
+      `port ${config.nodeRed.uiPort} already in use. New port assgined: ${port}`,
+    );
+    config.nodeRed.uiPort = port;
+  }
+
   setupNodeRedDirectory(config);
 
-  const { executable, args } = buildCommand(config.debug);
+  const { executable, args } = buildCommand(config.dev.debug);
   nodeRedProcess = spawn(executable, args);
   if (nodeRedProcess) {
     nodeRedProcess.stdout?.on("data", async (data) => {
       const message = data.toString().trim();
       console.log(`Node-RED: ${message}`);
 
-      if (
-        data.includes(
-          `Server now running at http://127.0.0.1:${config.nodeRed.uiPort}/`,
-        )
-      ) {
-        if (webSocket) {
-          webSocket.clients?.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send("refresh");
-            }
-          });
-        }
+      if (data.includes(`Server now running at http://127.0.0.1:${port}/`)) {
+        listener.clients?.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send("refresh");
+          }
+        });
 
-        if (config.open) {
-          await open(`http://127.0.0.1:${config.nodeRed.uiPort}`);
+        if (config.dev.open && !listener.clients.size) {
+          console.log(`Opening http://127.0.0.1:${port}`);
+          await open(`http://127.0.0.1:${port}`);
         }
       }
     });
@@ -110,14 +90,11 @@ async function startNodeRed(config: Config) {
         message.includes("Debugger attached") ||
         message.includes("Debugger ending")
       ) {
-        // Optionally log or handle debugger messages differently
         console.log(`Debugging info: ${message}`);
       } else {
         console.error(`Node-RED Error: ${message}`);
       }
     });
-
-    setupWebSocket(config);
   }
 }
 
