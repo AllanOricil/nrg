@@ -5,11 +5,13 @@ import { loadConfig } from "./config.js";
 import { startNodeRed } from "./node-red-runner.js";
 import { startListener } from "./listener.js";
 import { type Config } from "./config.js";
+import logger from "./logger";
 
 async function startWatcher(
   config: Config,
   configFilepath: string,
 ): Promise<void> {
+  logger.verbose("Starting watcher");
   let debounceTimeout: NodeJS.Timeout;
   let _config = config;
   const onChange = async (
@@ -17,13 +19,20 @@ async function startWatcher(
     filename: string | Buffer | null,
   ) => {
     if (filename) {
-      console.log(`File changed: ${filename}`);
+      logger.debug(
+        `Watcher determined the following file was changed: ${filename}`,
+      );
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(async () => {
+        logger.info("Rebuilding nodes and restarting Node-RED");
         if (filename === path.basename(configFilepath)) {
-          // NOTE: if config file is an esm module, I need to wait for this change to be released https://github.com/antonk52/lilconfig/pull/54
+          logger.verbose(
+            "Reloading config file because it was changed while in watch mode",
+          );
           const { config } = await loadConfig();
           _config = config;
+          logger.verbose("New config file loaded while in watch mode");
+          logger.debug(_config);
         }
         const { port, listener } = await startListener(config);
         _config.dev.port = port;
@@ -35,9 +44,12 @@ async function startWatcher(
 
   config.dev.watch.paths.forEach((path) => {
     if (fs.existsSync(path)) {
+      logger.verbose(`Adding watcher to the following file: ${path}`);
       fs.watch(path, { recursive: true }, onChange);
     }
   });
+
+  logger.verbose("Watcher initialization is complete");
 }
 
 export { startWatcher };

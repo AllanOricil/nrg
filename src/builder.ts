@@ -20,51 +20,64 @@ import {
   BUNDLER_TMP_DIST_DIRECTORY,
   BUNDLER_TMP_DIST_SOURCE_MAP_PATH,
 } from "./constants.js";
+import logger from "./logger.js";
 
 function clean() {
-  console.log("cleaning up before next build");
+  logger.info("Cleaning up before next build");
   fs.removeSync(DIST_DIRECTORY);
   fs.removeSync(BUNDLER_TMP_DIRECTORY);
-  console.log("clean up completed successfully");
+  logger.info("Clean up completed successfully");
 }
 
 function setup() {
-  console.log("setting up bundler dir");
+  logger.info("Setting up bundler dir");
   fs.mkdirpSync(BUILDER_DOT_DIRECTORY);
   fs.mkdirpSync(BUNDLER_TMP_DIRECTORY);
-  console.log("setup complete");
+  logger.info("Setup complete");
 }
 
 function processHtml(node: string): string {
-  const html = fs.readFileSync(
-    path.resolve(
-      BUNDLER_CLIENT_TMP_SRC_DIRECTORY,
-      "nodes",
-      node,
-      "client",
-      "index.html",
-    ),
-    { encoding: "utf-8" },
+  logger.verbose(`Processing html for node: ${node}`);
+  const htmlFilePath = path.resolve(
+    BUNDLER_CLIENT_TMP_SRC_DIRECTORY,
+    "nodes",
+    node,
+    "client",
+    "index.html",
   );
+  logger.verbose(`Loading html from ${htmlFilePath}`);
+  const html = fs.readFileSync(htmlFilePath, { encoding: "utf-8" });
+  logger.verbose("html file loaded");
+  logger.debug(html);
+  logger.verbose("parsing html");
   const $ = load(html, null, false);
+  logger.verbose("html parsed");
+  logger.verbose("Wrapping node template with a div");
   const templateContent = $("template").html();
   const newDiv = `<div id="${node}">${templateContent}</div>`;
   $("template").replaceWith(newDiv);
-  return $.html();
+  const result = $.html();
+  logger.verbose("Getting result html");
+  logger.debug(result);
+  return result;
 }
 
 async function bundleJavascript(buildOptions: esbuild.BuildOptions) {
+  logger.verbose("Building javascript with the following options");
+  logger.debug(buildOptions);
   await esbuild.build(buildOptions);
+  logger.verbose("javascript built");
 }
 
 async function renderServerEntrypoint(nodes: string[]) {
+  logger.verbose("Rendering the server entrypoint");
   const template = Handlebars.compile(
     fs.readFileSync(
       path.join(BUILDER_TEMPLATES, "server", "entrypoint.handlebars"),
       "utf-8",
     ),
   );
-
+  logger.verbose("Handlebars template loaded");
   const result = template({
     nodes: nodes.map((node, index) => {
       return {
@@ -74,12 +87,15 @@ async function renderServerEntrypoint(nodes: string[]) {
       };
     }),
   });
-
+  logger.verbose("Server entrypoint rendered");
+  logger.debug(result);
   return result;
 }
 
 function fixServerSourceMapPaths(): void {
+  logger.verbose("Updating server sourcemap paths");
   if (fs.existsSync(BUNDLER_TMP_DIST_SOURCE_MAP_PATH)) {
+    logger.verbose("Server sourcemap exists");
     const sourceMap: RawSourceMap = JSON.parse(
       fs.readFileSync(BUNDLER_TMP_DIST_SOURCE_MAP_PATH, { encoding: "utf-8" }),
     );
@@ -107,28 +123,39 @@ function fixServerSourceMapPaths(): void {
       return source;
     });
 
-    fs.writeFileSync(
-      BUNDLER_TMP_DIST_SOURCE_MAP_PATH,
-      JSON.stringify(sourceMap),
-      { encoding: "utf-8" },
-    );
+    logger.verbose("Server sourcemap paths updated");
+    const result = JSON.stringify(sourceMap);
+    logger.debug(result);
+    logger.verbose("Writting updated server sourcemap to disk");
+    fs.writeFileSync(BUNDLER_TMP_DIST_SOURCE_MAP_PATH, result, {
+      encoding: "utf-8",
+    });
+    logger.verbose("Server sourcemap update complete");
   }
 }
 
 async function bundleServer(config: Config): Promise<void> {
-  console.log("bundling server");
+  logger.info("Bundling server");
+  logger.verbose(`Creating dir: ${BUNDLER_SERVER_TMP_DIRECTORY}`);
   fs.mkdirpSync(BUNDLER_SERVER_TMP_DIRECTORY);
+  logger.verbose(
+    `Copying original source to: ${BUNDLER_SERVER_TMP_SRC_DIRECTORY}`,
+  );
   fs.copySync(SRC_DIRECTORY, BUNDLER_SERVER_TMP_SRC_DIRECTORY);
 
+  logger.verbose("Determining nodes that will be bundled");
   const nodes = fs.readdirSync(
     path.resolve(BUNDLER_SERVER_TMP_SRC_DIRECTORY, "nodes"),
   );
+  logger.debug(nodes);
 
   const serverEntrypoint = await renderServerEntrypoint(nodes);
   const serverEntrypointPath = path.resolve(
     BUNDLER_SERVER_TMP_SRC_DIRECTORY,
     "index.js",
   );
+
+  logger.verbose("Writting templated server entrypoint to disk");
   fs.writeFileSync(serverEntrypointPath, serverEntrypoint, {
     encoding: "utf-8",
   });
@@ -139,21 +166,29 @@ async function bundleServer(config: Config): Promise<void> {
     outfile: path.resolve(BUNDLER_TMP_DIST_DIRECTORY, "index.js"),
   };
 
+  logger.verbose("Bundling server javascript");
   await bundleJavascript(bundlerConfig);
   fixServerSourceMapPaths();
 
-  console.log("server bundled");
+  logger.info("Server bundled");
 }
 
 async function bundleClient(config: Config): Promise<void> {
-  console.log("bundling client");
+  logger.info("Bundling client");
+  logger.verbose(`Creating dir: ${BUNDLER_CLIENT_TMP_DIRECTORY}`);
   fs.mkdirpSync(BUNDLER_CLIENT_TMP_DIRECTORY);
+  logger.verbose(
+    `Copying original source to: ${BUNDLER_CLIENT_TMP_SRC_DIRECTORY}`,
+  );
   fs.copySync(SRC_DIRECTORY, BUNDLER_CLIENT_TMP_SRC_DIRECTORY);
 
+  logger.verbose("Determining nodes that will be bundled");
   const nodes = fs.readdirSync(
     path.resolve(BUNDLER_CLIENT_TMP_SRC_DIRECTORY, "nodes"),
   );
+  logger.debug(nodes);
 
+  logger.verbose("Loading client html handlebars template");
   const template = Handlebars.compile(
     fs.readFileSync(
       path.join(BUILDER_TEMPLATES, "client", "html.handlebars"),
@@ -161,6 +196,7 @@ async function bundleClient(config: Config): Promise<void> {
     ),
   );
 
+  logger.verbose("Loading client javascript entrypoint handlebars template");
   const entryPointTemplate = Handlebars.compile(
     fs.readFileSync(
       path.join(BUILDER_TEMPLATES, "client", "entrypoint.handlebars"),
@@ -170,6 +206,7 @@ async function bundleClient(config: Config): Promise<void> {
 
   const clientHtmlPath = path.join(BUNDLER_TMP_DIST_DIRECTORY, "index.html");
   for (const node of nodes) {
+    logger.verbose(`Processing node: ${node}`);
     const jsOutputPath = path.join(
       BUNDLER_CLIENT_TMP_SRC_DIRECTORY,
       "nodes",
@@ -201,9 +238,11 @@ async function bundleClient(config: Config): Promise<void> {
       outfile: jsOutputPath,
     };
 
+    logger.verbose("Bundling client javascript");
     await bundleJavascript(bundlerConfig);
     const js = fs.readFileSync(jsOutputPath, { encoding: "utf-8" });
 
+    logger.verbose("Rendering client html");
     const html = processHtml(node);
     const renderedClientHtml =
       template({
@@ -212,50 +251,66 @@ async function bundleClient(config: Config): Promise<void> {
         javascript: js.trim(),
       }) + "\n";
 
+    logger.verbose("Writting rendered client html to disk");
+    logger.debug(renderedClientHtml);
     fs.appendFileSync(clientHtmlPath, renderedClientHtml, {
       encoding: "utf-8",
     });
+    logger.verbose(`Finished processing node: ${node}`);
   }
 
   if (config.dev.port) {
-    console.log(`attach wss connection script using port ${config.dev.port}`);
+    logger.verbose(`attach listener script using port ${config.dev.port}`);
     const refreshScriptTemplate = Handlebars.compile(
       fs.readFileSync(
         path.resolve(BUILDER_TEMPLATES, "client", "refresh-script.handlebars"),
         { encoding: "utf-8" },
       ),
     );
+    logger.verbose("Rendering client listener script");
     const renderedRefreshScript = refreshScriptTemplate({
       port: config.dev.port,
     });
+    logger.verbose("Appending listener script to client final client html");
+    logger.debug(renderedRefreshScript);
     fs.appendFileSync(clientHtmlPath, renderedRefreshScript, {
       encoding: "utf-8",
     });
+    logger.verbose("Listener script was appended successfully");
   }
 
-  console.log("client bundled");
+  logger.info("Client bundled");
 }
 
 async function bundleIcons(): Promise<void> {
-  console.log("creating icons dir");
+  logger.info("Bundling icons");
+  logger.verbose("Determining nodes to process");
   const nodes = fs.readdirSync(path.resolve(SRC_DIRECTORY, "nodes"));
+  logger.debug(nodes);
   const iconsOutput = path.join(BUNDLER_TMP_DIST_DIRECTORY, "icons");
+  logger.verbose(`Creating icons output folder: ${iconsOutput}`);
   fs.mkdirpSync(iconsOutput);
+
   for (const node of nodes) {
+    logger.verbose(`Processing node: ${node}`);
     fs.copySync(
       path.resolve(SRC_DIRECTORY, "nodes", node, "client", "icons"),
       iconsOutput,
     );
   }
-  console.log("icons dir created");
+  logger.info("Icons bundled");
 }
 
 async function bundleLocales(): Promise<void> {
-  console.log("creating locales dir");
+  logger.info("Bundling locales");
+  logger.verbose("Determining nodes to process");
   const nodes = fs.readdirSync(path.resolve(SRC_DIRECTORY, "nodes"));
+  logger.debug(nodes);
   const localesOutput = path.join(BUNDLER_TMP_DIST_DIRECTORY, "locales");
+  logger.verbose(`Creating locales output folder: ${localesOutput}`);
   fs.mkdirpSync(localesOutput);
 
+  logger.verbose("Loading locales handlebars template");
   const template = Handlebars.compile(
     fs.readFileSync(
       path.join(BUILDER_TEMPLATES, "client", "locale.handlebars"),
@@ -264,8 +319,8 @@ async function bundleLocales(): Promise<void> {
   );
 
   const dictionariesMap = new Map();
-
   for (const node of nodes) {
+    logger.verbose(`Processing node: ${node}`);
     const docs = fs.readdirSync(
       path.resolve(SRC_DIRECTORY, "nodes", node, "client", "i18n", "docs"),
     );
@@ -339,19 +394,22 @@ async function bundleLocales(): Promise<void> {
     }
   }
 
+  logger.verbose("Finished processing all dictionaries");
+  logger.debug(dictionariesMap);
+
   for (const value of dictionariesMap.values()) {
-    fs.writeFileSync(
-      path.join(value.path, "index.json"),
-      JSON.stringify(value.data),
-      {
-        encoding: "utf-8",
-      },
-    );
+    const dictionaryFilePath = path.join(value.path, "index.json");
+    logger.verbose(`Writting dictionary to: ${dictionaryFilePath}`);
+    logger.debug(value.data);
+    fs.writeFileSync(dictionaryFilePath, JSON.stringify(value.data), {
+      encoding: "utf-8",
+    });
   }
-  console.log("locales dir created");
+  logger.info("Locales bundled");
 }
 
 async function build(config: Config): Promise<void> {
+  logger.info("Start build");
   clean();
   setup();
   await Promise.all([
@@ -361,6 +419,7 @@ async function build(config: Config): Promise<void> {
     bundleLocales(),
   ]);
   fs.copySync(BUNDLER_TMP_DIST_DIRECTORY, DIST_DIRECTORY);
+  logger.info("End build");
 }
 
 export { build };

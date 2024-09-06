@@ -1,6 +1,7 @@
 import detectPort from "detect-port";
 import WebSocket, { WebSocketServer } from "ws";
 import { type Config } from "./config.js";
+import logger from "./logger";
 
 let port: number;
 let listener: WebSocket.Server;
@@ -9,26 +10,27 @@ async function startListener(config: Config): Promise<{
   listener: WebSocket.Server;
 }> {
   if (listener) {
-    console.log(`Returning current listener server running on port ${port}`);
+    logger.verbose(`Returning current listener server running on port ${port}`);
     return {
       port,
       listener,
     };
   }
 
+  logger.verbose(`Verifying if port ${config.dev.port || 3000} is available`);
   port = await detectPort(config.dev.port || 3000);
-  console.log(`Setting up new listener server on port ${port}`);
+  logger.verbose(`Setting up new listener server on port ${port}`);
 
   listener = new WebSocketServer({ port });
   listener.on("connection", (ws) => {
-    console.log("Client connected to listener");
+    logger.verbose("Client connected to listener");
 
     ws.on("message", (message) => {
-      console.log("Received message: ", message);
+      logger.verbose("Received message: ", message);
     });
   });
 
-  console.log(`Listener running on port ${port}`);
+  logger.verbose(`Listener running on port ${port}`);
 
   return {
     port,

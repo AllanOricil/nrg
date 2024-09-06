@@ -1,42 +1,50 @@
 import { type ChildProcess } from "child_process";
+import logger from "./logger";
 
 async function killSpawnedProcess(process: ChildProcess): Promise<void> {
   return new Promise((resolve, reject) => {
     if (!process || typeof process.kill !== "function" || process.killed) {
-      console.log("Invalid or already killed process. Cannot kill.");
+      logger.verbose("No process to be killed");
       return resolve();
     }
 
-    console.log("Attempting to kill spawned process...");
+    logger.verbose("Attempting to kill spawned process.");
 
     try {
       process.kill("SIGTERM");
 
       const killTimeout = setTimeout(() => {
         if (!process.killed) {
-          console.log(
-            "Process did not terminate gracefully. Sending SIGKILL...",
+          logger.verbose(
+            "Process did not terminate gracefully. Sending SIGKILL.",
           );
           try {
             process.kill("SIGKILL");
-          } catch (killError) {
-            return reject(`Failed to forcefully kill process: ${killError}`);
+          } catch (error) {
+            logger.error(`Failed to forcefully kill process: ${error.message}`);
+            logger.error(`Stack trace: ${error.stack}`);
+
+            return reject(`Failed to forcefully kill process: ${error}`);
           }
         }
       }, 5000);
 
       process.on("exit", (code, signal) => {
-        console.log(`Process exited with code ${code}, signal ${signal}`);
+        logger.verbose(`Process exited with code ${code}, signal ${signal}`);
         clearTimeout(killTimeout);
         resolve();
       });
 
-      process.on("error", (err) => {
+      process.on("error", (error) => {
+        logger.error(`Process error: ${error}`);
         clearTimeout(killTimeout);
-        reject(`Process error: ${err}`);
+        reject(`Process error: ${error}`);
       });
-    } catch (err) {
-      reject(`Failed to kill process: ${err}`);
+    } catch (error) {
+      logger.error(`Failed to kill process: ${error.message}`);
+      logger.error(error.stack);
+
+      reject(`Failed to kill process: ${error}`);
     }
   });
 }

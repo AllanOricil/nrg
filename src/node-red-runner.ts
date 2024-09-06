@@ -12,34 +12,44 @@ import {
   NODE_RED_SETTINGS_FILE,
   NODE_RED_DIRECTORY,
 } from "./constants.js";
+import logger from "./logger";
 
 let nodeRedProcess: ChildProcess;
-
 function setupNodeRedDirectory(config: Config) {
+  logger.info(`Creating Node-RED user directory at: ${NODE_RED_DIRECTORY}`);
   if (!fs.existsSync(NODE_RED_DIRECTORY)) {
     fs.mkdirSync(NODE_RED_DIRECTORY, { recursive: true });
   }
+  logger.info("Node-RED user directory created");
 
+  logger.verbose(
+    "Setting up userDir and nodesDir in Node-RED's setting file that is going to be written",
+  );
   const nodeRedSettings = deepmerge(config.nodeRed || {}, {
     userDir: NODE_RED_DIRECTORY,
     // NOTE: this works, but it break locales https://github.com/node-red/node-red/issues/1604
     nodesDir: PROJECT_ROOT_DIRECTORY,
   });
-
-  fs.writeFileSync(
-    NODE_RED_SETTINGS_FILE,
-    `module.exports = ${JSON.stringify(nodeRedSettings, null, 2)}`,
-    { encoding: "utf-8" },
-  );
+  logger.verbose("Properties updated successfully");
+  const settinsFileData = `module.exports = ${JSON.stringify(nodeRedSettings, null, 2)}`;
+  logger.info(`Creating Node-RED settings file at: ${NODE_RED_SETTINGS_FILE}`);
+  logger.debug(settinsFileData);
+  fs.writeFileSync(NODE_RED_SETTINGS_FILE, settinsFileData, {
+    encoding: "utf-8",
+  });
+  logger.info("Node-RED settings file created");
 }
 
 function buildCommand(debug: boolean) {
+  logger.verbose("Creating command to launch Node-RED");
   const args = [
     ...(debug ? ["--inspect"] : []),
     NODE_RED_EXECUTABLE,
     "--settings",
     NODE_RED_SETTINGS_FILE,
   ];
+
+  logger.verbose(`Resulting arguments: ${args.join(" ")}`);
 
   return {
     executable: "node",
@@ -48,8 +58,10 @@ function buildCommand(debug: boolean) {
 }
 
 async function startNodeRed(config: Config, listener: WebSocket.Server) {
+  logger.info("Starting Node-RED");
+
   if (nodeRedProcess) {
-    console.log("Stopping Node-RED");
+    logger.info("Stopping Node-RED current process");
     await killSpawnedProcess(nodeRedProcess);
   }
 
@@ -63,22 +75,24 @@ async function startNodeRed(config: Config, listener: WebSocket.Server) {
 
   setupNodeRedDirectory(config);
 
+  logger.info(`Launching Node-RED using port: ${port}`);
   const { executable, args } = buildCommand(config.dev.debug);
   nodeRedProcess = spawn(executable, args);
   if (nodeRedProcess) {
     nodeRedProcess.stdout?.on("data", async (data) => {
       const message = data.toString().trim();
-      console.log(`Node-RED: ${message}`);
+      logger.info(`\x1b[32m[Node-RED]\x1b[0m ${message}`);
 
       if (data.includes(`Server now running at http://127.0.0.1:${port}/`)) {
         listener.clients?.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
+            logger.verbose("Sending refresh signal to the browser");
             client.send("refresh");
           }
         });
 
         if (config.dev.open && !listener.clients.size) {
-          console.log(`Opening http://127.0.0.1:${port}`);
+          logger.info(`Opening http://127.0.0.1:${port}`);
           await open(`http://127.0.0.1:${port}`);
         }
       }
@@ -90,9 +104,9 @@ async function startNodeRed(config: Config, listener: WebSocket.Server) {
         message.includes("Debugger attached") ||
         message.includes("Debugger ending")
       ) {
-        console.log(`Debugging info: ${message}`);
+        logger.info(`Debugging info: ${message}`);
       } else {
-        console.error(`Node-RED Error: ${message}`);
+        logger.error(`\x1b[32m[Node-RED]\x1b[0m Error: ${message}`);
       }
     });
   }
