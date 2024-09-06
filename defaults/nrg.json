@@ -24,23 +24,48 @@
     }
   },
   "build": {
-    "server": {
-      "bundle": true,
-      "platform": "node",
-      "format": "cjs",
-      "minify": false,
-      "keepNames": true,
-      "sourcemap": true
+    "environment": "prod",
+    "server": {},
+    "client": {},
+    "dev": {
+      "server": {
+        "bundle": true,
+        "platform": "node",
+        "format": "cjs",
+        "minify": false,
+        "keepNames": true,
+        "sourcemap": true
+      },
+      "client": {
+        "bundle": true,
+        "format": "iife",
+        "platform": "browser",
+        "target": ["es2020"],
+        "keepNames": true,
+        "minify": false,
+        "sourcemap": "inline",
+        "allowOverwrite": true
+      }
     },
-    "client": {
-      "bundle": true,
-      "format": "iife",
-      "platform": "browser",
-      "target": ["es2020"],
-      "keepNames": true,
-      "minify": true,
-      "sourcemap": "inline",
-      "allowOverwrite": true
+    "prod": {
+      "server": {
+        "bundle": true,
+        "platform": "node",
+        "format": "cjs",
+        "minify": true,
+        "keepNames": true,
+        "sourcemap": false
+      },
+      "client": {
+        "bundle": true,
+        "format": "iife",
+        "platform": "browser",
+        "target": ["es2022"],
+        "keepNames": true,
+        "minify": true,
+        "sourcemap": false,
+        "allowOverwrite": true
+      }
     }
   },
   "nodeRed": {

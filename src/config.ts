@@ -23,15 +23,24 @@ interface Config {
     };
   };
   build: {
+    environment: "dev" | "prod";
     server: BuildOptions;
     client: BuildOptions;
+    dev: {
+      server: BuildOptions;
+      client: BuildOptions;
+    };
+    prod: {
+      server: BuildOptions;
+      client: BuildOptions;
+    };
   };
   nodeRed: Record<any, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 function getLilconfigInstance(): AsyncSearcher {
   if (lilconfigInstance) {
-    logger.verbose("Resuing lilconfigInstance");
+    logger.verbose("Re-using lilconfigInstance");
     return lilconfigInstance;
   }
 
@@ -78,7 +87,7 @@ async function loadConfig(): Promise<{
 
   logger.verbose("nrg config loaded");
   logger.verbose(`nrg config located at: ${nrgConfig.filepath}`);
-  logger.debug(nrgConfig.config);
+  logger.debug(JSON.stringify(nrgConfig.config));
 
   logger.verbose("Reading default nrg config");
   const defaultConfig: Config = JSON.parse(
@@ -87,12 +96,12 @@ async function loadConfig(): Promise<{
     }),
   );
   logger.verbose("Default nrg config loaded");
-  logger.debug(defaultConfig);
+  logger.debug(JSON.stringify(defaultConfig));
 
   const mergedConfig: Config = deepmerge(defaultConfig, nrgConfig.config);
   logger.verbose("merging project's nrg config to default nrg config");
   configFilepath = nrgConfig.filepath;
-  logger.debug(mergedConfig);
+  logger.debug(JSON.stringify(mergedConfig));
 
   return {
     filepath: nrgConfig.filepath,

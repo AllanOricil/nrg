@@ -64,7 +64,7 @@ function processHtml(node: string): string {
 
 async function bundleJavascript(buildOptions: esbuild.BuildOptions) {
   logger.verbose("Building javascript with the following options");
-  logger.debug(buildOptions);
+  logger.debug(JSON.stringify(buildOptions));
   await esbuild.build(buildOptions);
   logger.verbose("javascript built");
 }
@@ -147,7 +147,7 @@ async function bundleServer(config: Config): Promise<void> {
   const nodes = fs.readdirSync(
     path.resolve(BUNDLER_SERVER_TMP_SRC_DIRECTORY, "nodes"),
   );
-  logger.debug(nodes);
+  logger.debug(JSON.stringify(nodes));
 
   const serverEntrypoint = await renderServerEntrypoint(nodes);
   const serverEntrypointPath = path.resolve(
@@ -160,8 +160,13 @@ async function bundleServer(config: Config): Promise<void> {
     encoding: "utf-8",
   });
 
+  const bundleOptions = deepmerge(
+    config.build[config.build.environment].server,
+    config.build.server,
+  );
+
   const bundlerConfig: esbuild.BuildOptions = {
-    ...config.build?.server,
+    ...bundleOptions,
     entryPoints: [serverEntrypointPath],
     outfile: path.resolve(BUNDLER_TMP_DIST_DIRECTORY, "index.js"),
   };
@@ -186,7 +191,7 @@ async function bundleClient(config: Config): Promise<void> {
   const nodes = fs.readdirSync(
     path.resolve(BUNDLER_CLIENT_TMP_SRC_DIRECTORY, "nodes"),
   );
-  logger.debug(nodes);
+  logger.debug(JSON.stringify(nodes));
 
   logger.verbose("Loading client html handlebars template");
   const template = Handlebars.compile(
@@ -225,8 +230,13 @@ async function bundleClient(config: Config): Promise<void> {
       { encoding: "utf-8" },
     );
 
+    // NOTE: consumer can declare globals which overwrite env specifics
+    const bundleOptions = deepmerge(
+      config.build[config.build.environment].client,
+      config.build.client,
+    );
     const bundlerConfig: esbuild.BuildOptions = {
-      ...config.build?.client,
+      ...bundleOptions,
       entryPoints: [
         path.resolve(
           BUNDLER_CLIENT_TMP_SRC_DIRECTORY,
@@ -286,7 +296,7 @@ async function bundleIcons(): Promise<void> {
   logger.info("Bundling icons");
   logger.verbose("Determining nodes to process");
   const nodes = fs.readdirSync(path.resolve(SRC_DIRECTORY, "nodes"));
-  logger.debug(nodes);
+  logger.debug(JSON.stringify(nodes));
   const iconsOutput = path.join(BUNDLER_TMP_DIST_DIRECTORY, "icons");
   logger.verbose(`Creating icons output folder: ${iconsOutput}`);
   fs.mkdirpSync(iconsOutput);
@@ -305,7 +315,7 @@ async function bundleLocales(): Promise<void> {
   logger.info("Bundling locales");
   logger.verbose("Determining nodes to process");
   const nodes = fs.readdirSync(path.resolve(SRC_DIRECTORY, "nodes"));
-  logger.debug(nodes);
+  logger.debug(JSON.stringify(nodes));
   const localesOutput = path.join(BUNDLER_TMP_DIST_DIRECTORY, "locales");
   logger.verbose(`Creating locales output folder: ${localesOutput}`);
   fs.mkdirpSync(localesOutput);
@@ -391,16 +401,18 @@ async function bundleLocales(): Promise<void> {
         data: deepmerge({ [node]: json }, current.data),
         path: current.path,
       });
+
+      logger.debug(JSON.stringify(Array.from(dictionariesMap)));
     }
   }
 
   logger.verbose("Finished processing all dictionaries");
-  logger.debug(dictionariesMap);
+  logger.debug(JSON.stringify(Array.from(dictionariesMap)));
 
   for (const value of dictionariesMap.values()) {
     const dictionaryFilePath = path.join(value.path, "index.json");
     logger.verbose(`Writting dictionary to: ${dictionaryFilePath}`);
-    logger.debug(value.data);
+    logger.debug(JSON.stringify(value.data));
     fs.writeFileSync(dictionaryFilePath, JSON.stringify(value.data), {
       encoding: "utf-8",
     });

@@ -32,7 +32,7 @@ async function startWatcher(
           const { config } = await loadConfig();
           _config = config;
           logger.verbose("New config file loaded while in watch mode");
-          logger.debug(_config);
+          logger.debug(JSON.stringify(_config));
         }
         const { port, listener } = await startListener(config);
         _config.dev.port = port;
