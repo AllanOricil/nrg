@@ -1,10 +1,11 @@
 import fs from "fs-extra";
 import path from "path";
-import esbuild from "esbuild";
+import esbuild, { type BuildOptions } from "esbuild";
 import Handlebars from "handlebars";
 import deepmerge from "deepmerge";
 import { load } from "cheerio";
 import { RawSourceMap } from "source-map";
+import { minify } from "html-minifier";
 import { type Config } from "./config.js";
 import {
   PROJECT_ROOT_DIRECTORY,
@@ -36,7 +37,7 @@ function setup() {
   logger.info("Setup complete");
 }
 
-function processHtml(node: string): string {
+function processHtml(buildOptions: BuildOptions, node: string): string {
   logger.verbose(`Processing html for node: ${node}`);
   const htmlFilePath = path.resolve(
     BUNDLER_CLIENT_TMP_SRC_DIRECTORY,
@@ -52,17 +53,26 @@ function processHtml(node: string): string {
   logger.verbose("parsing html");
   const $ = load(html, null, false);
   logger.verbose("html parsed");
-  logger.verbose("Wrapping node template with a div");
+  logger.verbose("Wrapping template with a div");
   const templateContent = $("template").html();
-  const newDiv = `<div id="${node}">${templateContent}</div>`;
-  $("template").replaceWith(newDiv);
-  const result = $.html();
-  logger.verbose("Getting result html");
+  $("template").replaceWith(`<div id="${node}">${templateContent}</div>`);
+  let result = $.html();
   logger.debug(result);
+  if (buildOptions.minify) {
+    logger.verbose("Minifying html");
+    result = minify(result, {
+      removeComments: true,
+      removeEmptyAttributes: true,
+      removeRedundantAttributes: true,
+      sortClassName: true,
+      sortAttributes: true,
+    });
+    logger.debug(result);
+  }
   return result;
 }
 
-async function bundleJavascript(buildOptions: esbuild.BuildOptions) {
+async function bundleJavascript(buildOptions: BuildOptions) {
   logger.verbose("Building javascript with the following options");
   logger.debug(JSON.stringify(buildOptions));
   await esbuild.build(buildOptions);
@@ -160,12 +170,13 @@ async function bundleServer(config: Config): Promise<void> {
     encoding: "utf-8",
   });
 
+  // NOTE: consumer can declare globals which overwrite env specifics
   const bundleOptions = deepmerge(
     config.build[config.build.environment].server,
     config.build.server,
   );
 
-  const bundlerConfig: esbuild.BuildOptions = {
+  const bundlerConfig: BuildOptions = {
     ...bundleOptions,
     entryPoints: [serverEntrypointPath],
     outfile: path.resolve(BUNDLER_TMP_DIST_DIRECTORY, "index.js"),
@@ -235,7 +246,7 @@ async function bundleClient(config: Config): Promise<void> {
       config.build[config.build.environment].client,
       config.build.client,
     );
-    const bundlerConfig: esbuild.BuildOptions = {
+    const bundlerConfig: BuildOptions = {
       ...bundleOptions,
       entryPoints: [
         path.resolve(
@@ -253,7 +264,7 @@ async function bundleClient(config: Config): Promise<void> {
     const js = fs.readFileSync(jsOutputPath, { encoding: "utf-8" });
 
     logger.verbose("Rendering client html");
-    const html = processHtml(node);
+    const html = processHtml(bundlerConfig, node);
     const renderedClientHtml =
       template({
         type: node,

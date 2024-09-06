@@ -1,7 +1,7 @@
 import fs from "fs-extra";
 import deepmerge from "deepmerge";
 import { lilconfig, type AsyncSearcher, type LilconfigResult } from "lilconfig";
-import { BuildOptions } from "esbuild";
+import { type BuildOptions } from "esbuild";
 import {
   PROJECT_ROOT_DIRECTORY,
   BUILDER_NAME,
