@@ -34,10 +34,10 @@ async function startWatcher(
           logger.verbose("New config file loaded while in watch mode");
           logger.debug(JSON.stringify(_config));
         }
-        const { port, listener } = await startListener(config);
+        const { port, listener } = await startListener(_config);
         _config.dev.port = port;
-        await build(config);
-        await startNodeRed(config, listener);
+        await build(_config);
+        await startNodeRed(_config, listener);
       }, 300);
     }
   };

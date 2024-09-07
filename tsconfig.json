@@ -12,8 +12,9 @@
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    "useUnknownInCatchVariables": false
+    "useUnknownInCatchVariables": false,
+    "types": ["vitest/globals"]
   },
-  "include": ["./src/**/*"],
-  "exclude": ["/node_modules/", "dist"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

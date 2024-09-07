@@ -25,7 +25,7 @@ const logger = createLogger({
       ),
     }),
     new transports.File({
-      filename: path.join(getProjectRoot(), "logs", "nrg.log"),
+      filename: path.resolve(getProjectRoot(), "logs", "nrg.log"),
       level: "silly",
       format: format.combine(format.uncolorize(), logFormat),
     }),
