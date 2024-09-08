@@ -31,6 +31,7 @@ import {
   BUNDLER_TMP_DIST_DIRECTORY,
   BUNDLER_TMP_DIST_SOURCE_MAP_PATH,
   BUILDER_ALLOWED_STYLE_SHEETS_FILE_EXTENSIONS,
+  BUILDER_ALLOWED_ICONS_FILE_EXTENSIONS,
 } from "./constants.js";
 import logger from "./logger.js";
 
@@ -408,10 +409,23 @@ async function bundleIcons(): Promise<void> {
 
   for (const node of nodes) {
     logger.verbose(`Processing node: ${node}`);
-    fs.copySync(
-      path.resolve(SRC_DIRECTORY, "nodes", node, "client", "icons"),
-      iconsOutput,
+    const nodeIconsDirectory = path.resolve(
+      SRC_DIRECTORY,
+      "nodes",
+      node,
+      "client",
+      "icons",
     );
+    const nodeIconsDirectoryFilepaths = await glob(
+      `${nodeIconsDirectory}/*.{${BUILDER_ALLOWED_ICONS_FILE_EXTENSIONS.join(",")}}`,
+    );
+    logger.debug(JSON.stringify(nodeIconsDirectoryFilepaths));
+    if (nodeIconsDirectoryFilepaths.length) {
+      fs.copySync(
+        path.resolve(SRC_DIRECTORY, "nodes", node, "client", "icons"),
+        iconsOutput,
+      );
+    }
   }
   logger.info("Icons bundled");
 }
@@ -436,18 +450,29 @@ async function bundleLocales(): Promise<void> {
   const dictionariesMap = new Map();
   for (const node of nodes) {
     logger.verbose(`Processing node: ${node}`);
-    const docs = fs.readdirSync(
-      path.resolve(SRC_DIRECTORY, "nodes", node, "client", "i18n", "docs"),
+
+    logger.verbose("Starting to process docs");
+    const nodeDocsDirectory = path.resolve(
+      SRC_DIRECTORY,
+      "nodes",
+      node,
+      "client",
+      "i18n",
+      "docs",
     );
 
-    for (const doc of docs) {
-      const language = path.basename(doc, path.extname(doc));
+    const nodeDocsFilepaths = await glob(`${nodeDocsDirectory}/*.html`);
+    logger.debug(nodeDocsFilepaths);
+
+    for (const nodeDocFilepath of nodeDocsFilepaths) {
+      logger.verbose(`Processing file: ${nodeDocFilepath}`);
+      const language = path.basename(
+        nodeDocFilepath,
+        path.extname(nodeDocFilepath),
+      );
       const localeLanguageOutput = path.join(localesOutput, language);
       fs.mkdirpSync(localeLanguageOutput);
-      const html = fs.readFileSync(
-        path.join(SRC_DIRECTORY, "nodes", node, "client", "i18n", "docs", doc),
-        { encoding: "utf-8" },
-      );
+      const html = fs.readFileSync(nodeDocFilepath, { encoding: "utf-8" });
       const renderedHtml =
         template({
           type: node,
@@ -463,19 +488,27 @@ async function bundleLocales(): Promise<void> {
       );
     }
 
-    const dictionaries = fs.readdirSync(
-      path.resolve(
-        SRC_DIRECTORY,
-        "nodes",
-        node,
-        "client",
-        "i18n",
-        "dictionaries",
-      ),
+    logger.verbose("Starting to process dictionaries");
+    const nodeDictionariesDirectory = path.resolve(
+      SRC_DIRECTORY,
+      "nodes",
+      node,
+      "client",
+      "i18n",
+      "dictionaries",
     );
 
-    for (const dictionary of dictionaries) {
-      const language = path.basename(dictionary, path.extname(dictionary));
+    const nodeDictionariesFilepaths = await glob(
+      `${nodeDictionariesDirectory}/*.json`,
+    );
+    logger.debug(nodeDictionariesFilepaths);
+
+    for (const nodeDictionaryFilepath of nodeDictionariesFilepaths) {
+      logger.verbose(`Processing file: ${nodeDictionaryFilepath}`);
+      const language = path.basename(
+        nodeDictionaryFilepath,
+        path.extname(nodeDictionaryFilepath),
+      );
       const localeLanguageOutput = path.join(localesOutput, language);
       fs.mkdirpSync(localeLanguageOutput);
 
@@ -487,18 +520,7 @@ async function bundleLocales(): Promise<void> {
       }
 
       const json = JSON.parse(
-        fs.readFileSync(
-          path.join(
-            SRC_DIRECTORY,
-            "nodes",
-            node,
-            "client",
-            "i18n",
-            "dictionaries",
-            dictionary,
-          ),
-          { encoding: "utf-8" },
-        ),
+        fs.readFileSync(nodeDictionaryFilepath, { encoding: "utf-8" }),
       );
 
       const current = dictionariesMap.get(language);

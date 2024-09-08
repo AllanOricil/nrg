@@ -17,6 +17,13 @@ export const BUILDER_ALLOWED_STYLE_SHEETS_FILE_EXTENSIONS = [
   // "sass",
 ];
 
+export const BUILDER_ALLOWED_ICONS_FILE_EXTENSIONS = [
+  "jpg",
+  "svg",
+  "png",
+  "gif",
+];
+
 export const PROJECT_ROOT_DIRECTORY = getProjectRoot();
 logger.verbose(`PROJECT_ROOT_DIRECTORY: ${PROJECT_ROOT_DIRECTORY}`);
 
