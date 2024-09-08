@@ -6,6 +6,16 @@ import deepmerge from "deepmerge";
 import { load } from "cheerio";
 import { RawSourceMap } from "source-map";
 import { minify } from "html-minifier";
+import { glob } from "glob";
+import postcss from "postcss";
+import prefixSelector from "postcss-prefix-selector";
+// @ts-expect-error does not have types, and community has also not created types for this package
+import postcssSass from "@csstools/postcss-sass";
+import postcssScssParser from "postcss-scss";
+
+// NOTE: was not able to make @csstoll/postcss-sass work with .sass file extension => dart-sass@v1.178.0
+// import postcssSassParser from "postcss-sass";
+import cssnano from "cssnano";
 import { type Config } from "./config.js";
 import {
   PROJECT_ROOT_DIRECTORY,
@@ -20,6 +30,7 @@ import {
   BUILDER_TEMPLATES,
   BUNDLER_TMP_DIST_DIRECTORY,
   BUNDLER_TMP_DIST_SOURCE_MAP_PATH,
+  BUILDER_ALLOWED_STYLE_SHEETS_FILE_EXTENSIONS,
 } from "./constants.js";
 import logger from "./logger.js";
 
@@ -72,6 +83,82 @@ function processHtml(buildOptions: BuildOptions, node: string): string {
   return result;
 }
 
+async function processStylesheets(
+  buildOptions: BuildOptions,
+  node: string,
+): Promise<string[] | undefined> {
+  logger.verbose(`Processing stylesheets for node: ${node}`);
+
+  const cssStylesheetDirectory = path.resolve(
+    SRC_DIRECTORY,
+    "nodes",
+    node,
+    "client",
+  );
+
+  const stylesheetFilepaths = await glob(
+    `${cssStylesheetDirectory}/**/*.{${BUILDER_ALLOWED_STYLE_SHEETS_FILE_EXTENSIONS.join(",")}}`,
+  );
+
+  if (stylesheetFilepaths.length === 0) {
+    logger.verbose("No .css or .scss files found to process");
+    return;
+  }
+
+  // TODO: avoid reprocessing .scss stylesheets that were already imported with @import
+  const processedStylesheets = [];
+  for (const stylesheetFilepath of stylesheetFilepaths) {
+    logger.verbose(`Loading stylesheet ${stylesheetFilepath}`);
+    const stylesheet = await fs.readFile(stylesheetFilepath, {
+      encoding: "utf-8",
+    });
+    logger.verbose("Stylesheet file loaded");
+    logger.debug(stylesheet);
+
+    const plugins: postcss.AcceptedPlugin[] = [
+      ...(stylesheetFilepath.endsWith(".scss") ? [postcssSass()] : []),
+      prefixSelector({ prefix: `#${node}` }),
+      ...(buildOptions.minify ? [cssnano({ preset: "default" })] : []),
+    ];
+
+    const { css, map } = await postcss(plugins).process(stylesheet, {
+      from: stylesheetFilepath,
+      ...(stylesheetFilepath.endsWith(".scss")
+        ? { syntax: postcssScssParser }
+        : {}),
+      ...(buildOptions.sourcemap
+        ? { map: { inline: false, prev: false } }
+        : {}),
+    });
+
+    logger.verbose("Stylesheet processed");
+    logger.debug(css);
+
+    if (map && buildOptions.sourcemap) {
+      logger.verbose("Adding sourcemap");
+      logger.debug(`Original: ${map}`);
+      const mapJson = map.toJSON();
+
+      // NOTE: I'm processing sourcemap to remove intermidiate sourcemaps. I only need the original source
+      mapJson.sources.splice(1, 2);
+      mapJson.sourcesContent?.splice(1, 2);
+
+      const mapJsonString = JSON.stringify(mapJson);
+      logger.debug(`Modified: ${mapJsonString}`);
+      const mapBase64String = Buffer.from(mapJsonString).toString("base64");
+      logger.debug(mapBase64String);
+
+      processedStylesheets.push(
+        `${css}\n/*# sourceMappingURL=data:application/json;base64,${mapBase64String} */`,
+      );
+    } else {
+      processedStylesheets.push(css);
+    }
+  }
+
+  return processedStylesheets;
+}
+
 async function bundleJavascript(buildOptions: BuildOptions) {
   logger.verbose("Building javascript with the following options");
   logger.debug(JSON.stringify(buildOptions));
@@ -102,7 +189,7 @@ async function renderServerEntrypoint(nodes: string[]) {
   return result;
 }
 
-function fixServerSourceMapPaths(): void {
+function fixServerJavascriptSourceMapPaths(): void {
   logger.verbose("Updating server sourcemap paths");
   if (fs.existsSync(BUNDLER_TMP_DIST_SOURCE_MAP_PATH)) {
     logger.verbose("Server sourcemap exists");
@@ -184,7 +271,7 @@ async function bundleServer(config: Config): Promise<void> {
 
   logger.verbose("Bundling server javascript");
   await bundleJavascript(bundlerConfig);
-  fixServerSourceMapPaths();
+  fixServerJavascriptSourceMapPaths();
 
   logger.info("Server bundled");
 }
@@ -261,16 +348,23 @@ async function bundleClient(config: Config): Promise<void> {
 
     logger.verbose("Bundling client javascript");
     await bundleJavascript(bundlerConfig);
+
+    logger.verbose("Rendering client form");
+    const html = processHtml(bundlerConfig, node);
+
+    logger.verbose("Rendering client stylesheets");
+    const stylesheets = await processStylesheets(bundlerConfig, node);
+
+    logger.verbose("Loading rendered client javascript from disk");
     const js = fs.readFileSync(jsOutputPath, { encoding: "utf-8" });
 
     logger.verbose("Rendering client html");
-    const html = processHtml(bundlerConfig, node);
-    const renderedClientHtml =
-      template({
-        type: node,
-        html: html.trim(),
-        javascript: js.trim(),
-      }) + "\n";
+    const renderedClientHtml = template({
+      type: node,
+      html: html.trim(),
+      javascript: js.trim(),
+      stylesheets: stylesheets,
+    });
 
     logger.verbose("Writting rendered client html to disk");
     logger.debug(renderedClientHtml);

@@ -1,7 +1,16 @@
+{{#if html}}
 <script type="text/x-red" data-template-name="{{type}}">
 {{{html}}}
 </script>
+{{/if}}
 
+{{#if javascript}}
 <script type="text/javascript">{{{javascript}}}
-//# sourceURL=nodes/{{type}}/index.js
+//# sourceURL=src/nodes/{{type}}/index.js
 </script>
+{{/if}}
+
+{{#each stylesheets}}
+<style type="text/css">{{{this}}}</style>
+{{/each}}
+

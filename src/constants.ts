@@ -10,6 +10,13 @@ logger.verbose("resolving constants");
 
 export const BUILDER_NAME: string = "nrg";
 
+// NOTE: @csstools/postcss-sass isnt working with .sass => dart-sass@v1.178.0
+export const BUILDER_ALLOWED_STYLE_SHEETS_FILE_EXTENSIONS = [
+  "css",
+  "scss",
+  // "sass",
+];
+
 export const PROJECT_ROOT_DIRECTORY = getProjectRoot();
 logger.verbose(`PROJECT_ROOT_DIRECTORY: ${PROJECT_ROOT_DIRECTORY}`);
 
