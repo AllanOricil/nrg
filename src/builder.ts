@@ -12,6 +12,7 @@ import prefixSelector from "postcss-prefix-selector";
 // @ts-expect-error does not have types, and community has also not created types for this package
 import postcssSass from "@csstools/postcss-sass";
 import postcssScssParser from "postcss-scss";
+import autoprefixer from "autoprefixer";
 
 // NOTE: was not able to make @csstoll/postcss-sass work with .sass file extension => dart-sass@v1.178.0
 // import postcssSassParser from "postcss-sass";
@@ -120,6 +121,7 @@ async function processStylesheets(
       ...(stylesheetFilepath.endsWith(".scss") ? [postcssSass()] : []),
       prefixSelector({ prefix: `#${node}` }),
       ...(buildOptions.minify ? [cssnano({ preset: "default" })] : []),
+      autoprefixer(),
     ];
 
     const { css, map } = await postcss(plugins).process(stylesheet, {
