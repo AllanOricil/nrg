@@ -8,18 +8,16 @@
       "paths": [
         "src",
         "package.json",
-        "nrg.config.js",
+        "nrg.config.json",
         "nrg.config.js",
         "nrg.config.cjs",
         ".nrgrc.json",
         ".nrgrc.js",
         ".nrgrc.cjs",
-        ".nrgrc.js",
         ".config/nrgrc",
         ".config/nrgrc.json",
         ".config/nrgrc.js",
-        ".config/nrgrc.cjs",
-        ".config/nrgrc.js"
+        ".config/nrgrc.cjs"
       ]
     }
   },

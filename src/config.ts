@@ -44,14 +44,21 @@ function getLilconfigInstance(): AsyncSearcher {
     return lilconfigInstance;
   }
 
+  // NOTE: I'm overriding these paths because I don't want users to use .mjs files because when they are updated in the running process, during a watch, the cached module is reused instead of the newer one.
   logger.verbose("Creating new lilconfigInstance");
   lilconfigInstance = lilconfig(BUILDER_NAME, {
     searchPlaces: [
       "package.json",
       `.${BUILDER_NAME}rc.json`,
+      `.${BUILDER_NAME}rc.js`,
+      `.${BUILDER_NAME}rc.cjs`,
+      `${BUILDER_NAME}.config.json`,
       `${BUILDER_NAME}.config.js`,
       `${BUILDER_NAME}.config.cjs`,
-      `${BUILDER_NAME}.config.mjs`,
+      `.config/${BUILDER_NAME}rc`,
+      `.config/${BUILDER_NAME}.json`,
+      `.config/${BUILDER_NAME}.js`,
+      `.config/${BUILDER_NAME}.cjs`,
     ],
     stopDir: PROJECT_ROOT_DIRECTORY,
     cache: false,
