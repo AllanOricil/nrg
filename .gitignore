@@ -1,4 +1,5 @@
 .DS_Store
+.nrg
 node_modules
 dist
 logs

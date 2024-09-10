@@ -20,43 +20,49 @@ import cssnano from "cssnano";
 import { type Config } from "./config.js";
 import {
   PROJECT_ROOT_DIRECTORY,
-  DIST_DIRECTORY,
-  BUNDLER_TMP_DIRECTORY,
-  BUILDER_DOT_DIRECTORY,
-  BUNDLER_SERVER_TMP_DIRECTORY,
   SRC_DIRECTORY,
-  BUNDLER_SERVER_TMP_SRC_DIRECTORY,
-  BUNDLER_CLIENT_TMP_DIRECTORY,
-  BUNDLER_CLIENT_TMP_SRC_DIRECTORY,
+  DIST_DIRECTORY,
+  BUILDER_SERVER_TMP_DIRECTORY,
+  BUILDER_TMP_DIRECTORY,
+  BUILDER_DOT_DIRECTORY,
+  BUILDER_TMP_DIST_DIRECTORY,
+  BUILDER_TMP_DIST_SOURCE_MAP_PATH,
+  BUILDER_SERVER_TMP_SRC_DIRECTORY,
+  BUILDER_CLIENT_TMP_DIRECTORY,
+  BUILDER_CLIENT_TMP_SRC_DIRECTORY,
   BUILDER_TEMPLATES,
-  BUNDLER_TMP_DIST_DIRECTORY,
-  BUNDLER_TMP_DIST_SOURCE_MAP_PATH,
   BUILDER_ALLOWED_STYLE_SHEETS_FILE_EXTENSIONS,
   BUILDER_ALLOWED_ICONS_FILE_EXTENSIONS,
+  BUILDER_NODE_ICONS_FOLDER_NAME,
+  BUILDER_NODE_LOCALES_FOLDER_NAME,
+  BUILDER_NODE_LOCALES_DOCS_FOLDER_NAME,
+  BUILDER_NODE_LOCALES_LABELS_FOLDER_NAME,
+  BUILDER_NODE_CLIENT_FOLDER_NAME,
+  BUILDER_NODE_SERVER_FOLDER_NAME,
 } from "./constants.js";
 import logger from "./logger.js";
 
 function clean() {
   logger.info("Cleaning up before next build");
   fs.removeSync(DIST_DIRECTORY);
-  fs.removeSync(BUNDLER_TMP_DIRECTORY);
+  fs.removeSync(BUILDER_TMP_DIRECTORY);
   logger.info("Clean up completed successfully");
 }
 
 function setup() {
   logger.info("Setting up bundler dir");
   fs.mkdirpSync(BUILDER_DOT_DIRECTORY);
-  fs.mkdirpSync(BUNDLER_TMP_DIRECTORY);
+  fs.mkdirpSync(BUILDER_TMP_DIRECTORY);
   logger.info("Setup complete");
 }
 
 function processHtml(buildOptions: BuildOptions, node: string): string {
   logger.verbose(`Processing html for node: ${node}`);
   const htmlFilePath = path.resolve(
-    BUNDLER_CLIENT_TMP_SRC_DIRECTORY,
+    BUILDER_CLIENT_TMP_SRC_DIRECTORY,
     "nodes",
     node,
-    "client",
+    BUILDER_NODE_CLIENT_FOLDER_NAME,
     "index.html",
   );
   logger.verbose(`Loading html from ${htmlFilePath}`);
@@ -95,7 +101,7 @@ async function processStylesheets(
     SRC_DIRECTORY,
     "nodes",
     node,
-    "client",
+    BUILDER_NODE_CLIENT_FOLDER_NAME,
   );
 
   const stylesheetFilepaths = await glob(
@@ -173,7 +179,11 @@ async function renderServerEntrypoint(nodes: string[]) {
   logger.verbose("Rendering the server entrypoint");
   const template = Handlebars.compile(
     fs.readFileSync(
-      path.join(BUILDER_TEMPLATES, "server", "entrypoint.handlebars"),
+      path.join(
+        BUILDER_TEMPLATES,
+        BUILDER_NODE_SERVER_FOLDER_NAME,
+        "entrypoint.handlebars",
+      ),
       "utf-8",
     ),
   );
@@ -194,10 +204,10 @@ async function renderServerEntrypoint(nodes: string[]) {
 
 function fixServerJavascriptSourceMapPaths(): void {
   logger.verbose("Updating server sourcemap paths");
-  if (fs.existsSync(BUNDLER_TMP_DIST_SOURCE_MAP_PATH)) {
+  if (fs.existsSync(BUILDER_TMP_DIST_SOURCE_MAP_PATH)) {
     logger.verbose("Server sourcemap exists");
     const sourceMap: RawSourceMap = JSON.parse(
-      fs.readFileSync(BUNDLER_TMP_DIST_SOURCE_MAP_PATH, { encoding: "utf-8" }),
+      fs.readFileSync(BUILDER_TMP_DIST_SOURCE_MAP_PATH, { encoding: "utf-8" }),
     );
 
     sourceMap.sources = sourceMap.sources.map((source) => {
@@ -227,7 +237,7 @@ function fixServerJavascriptSourceMapPaths(): void {
     const result = JSON.stringify(sourceMap);
     logger.debug(result);
     logger.verbose("Writting updated server sourcemap to disk");
-    fs.writeFileSync(BUNDLER_TMP_DIST_SOURCE_MAP_PATH, result, {
+    fs.writeFileSync(BUILDER_TMP_DIST_SOURCE_MAP_PATH, result, {
       encoding: "utf-8",
     });
     logger.verbose("Server sourcemap update complete");
@@ -236,22 +246,22 @@ function fixServerJavascriptSourceMapPaths(): void {
 
 async function bundleServer(config: Config): Promise<void> {
   logger.info("Bundling server");
-  logger.verbose(`Creating dir: ${BUNDLER_SERVER_TMP_DIRECTORY}`);
-  fs.mkdirpSync(BUNDLER_SERVER_TMP_DIRECTORY);
+  logger.verbose(`Creating dir: ${BUILDER_SERVER_TMP_DIRECTORY}`);
+  fs.mkdirpSync(BUILDER_SERVER_TMP_DIRECTORY);
   logger.verbose(
-    `Copying original source to: ${BUNDLER_SERVER_TMP_SRC_DIRECTORY}`,
+    `Copying original source to: ${BUILDER_SERVER_TMP_SRC_DIRECTORY}`,
   );
-  fs.copySync(SRC_DIRECTORY, BUNDLER_SERVER_TMP_SRC_DIRECTORY);
+  fs.copySync(SRC_DIRECTORY, BUILDER_SERVER_TMP_SRC_DIRECTORY);
 
   logger.verbose("Determining nodes that will be bundled");
   const nodes = fs.readdirSync(
-    path.resolve(BUNDLER_SERVER_TMP_SRC_DIRECTORY, "nodes"),
+    path.resolve(BUILDER_SERVER_TMP_SRC_DIRECTORY, "nodes"),
   );
   logger.debug(JSON.stringify(nodes));
 
   const serverEntrypoint = await renderServerEntrypoint(nodes);
   const serverEntrypointPath = path.resolve(
-    BUNDLER_SERVER_TMP_SRC_DIRECTORY,
+    BUILDER_SERVER_TMP_SRC_DIRECTORY,
     "index.js",
   );
 
@@ -269,7 +279,7 @@ async function bundleServer(config: Config): Promise<void> {
   const bundlerConfig: BuildOptions = {
     ...bundleOptions,
     entryPoints: [serverEntrypointPath],
-    outfile: path.resolve(BUNDLER_TMP_DIST_DIRECTORY, "index.js"),
+    outfile: path.resolve(BUILDER_TMP_DIST_DIRECTORY, "index.js"),
   };
 
   logger.verbose("Bundling server javascript");
@@ -281,23 +291,27 @@ async function bundleServer(config: Config): Promise<void> {
 
 async function bundleClient(config: Config): Promise<void> {
   logger.info("Bundling client");
-  logger.verbose(`Creating dir: ${BUNDLER_CLIENT_TMP_DIRECTORY}`);
-  fs.mkdirpSync(BUNDLER_CLIENT_TMP_DIRECTORY);
+  logger.verbose(`Creating dir: ${BUILDER_CLIENT_TMP_DIRECTORY}`);
+  fs.mkdirpSync(BUILDER_CLIENT_TMP_DIRECTORY);
   logger.verbose(
-    `Copying original source to: ${BUNDLER_CLIENT_TMP_SRC_DIRECTORY}`,
+    `Copying original source to: ${BUILDER_CLIENT_TMP_SRC_DIRECTORY}`,
   );
-  fs.copySync(SRC_DIRECTORY, BUNDLER_CLIENT_TMP_SRC_DIRECTORY);
+  fs.copySync(SRC_DIRECTORY, BUILDER_CLIENT_TMP_SRC_DIRECTORY);
 
   logger.verbose("Determining nodes that will be bundled");
   const nodes = fs.readdirSync(
-    path.resolve(BUNDLER_CLIENT_TMP_SRC_DIRECTORY, "nodes"),
+    path.resolve(BUILDER_CLIENT_TMP_SRC_DIRECTORY, "nodes"),
   );
   logger.debug(JSON.stringify(nodes));
 
   logger.verbose("Loading client html handlebars template");
   const template = Handlebars.compile(
     fs.readFileSync(
-      path.join(BUILDER_TEMPLATES, "client", "html.handlebars"),
+      path.join(
+        BUILDER_TEMPLATES,
+        BUILDER_NODE_CLIENT_FOLDER_NAME,
+        "html.handlebars",
+      ),
       "utf-8",
     ),
   );
@@ -305,28 +319,32 @@ async function bundleClient(config: Config): Promise<void> {
   logger.verbose("Loading client javascript entrypoint handlebars template");
   const entryPointTemplate = Handlebars.compile(
     fs.readFileSync(
-      path.join(BUILDER_TEMPLATES, "client", "entrypoint.handlebars"),
+      path.join(
+        BUILDER_TEMPLATES,
+        BUILDER_NODE_CLIENT_FOLDER_NAME,
+        "entrypoint.handlebars",
+      ),
       "utf-8",
     ),
   );
 
-  const clientHtmlPath = path.join(BUNDLER_TMP_DIST_DIRECTORY, "index.html");
+  const clientHtmlPath = path.join(BUILDER_TMP_DIST_DIRECTORY, "index.html");
   for (const node of nodes) {
     logger.verbose(`Processing node: ${node}`);
     const jsOutputPath = path.join(
-      BUNDLER_CLIENT_TMP_SRC_DIRECTORY,
+      BUILDER_CLIENT_TMP_SRC_DIRECTORY,
       "nodes",
       node,
       "index.js",
     );
 
     const renderedJsEntrypoint = entryPointTemplate({
-      path: "./" + path.join("client", "index.js"),
+      path: "./" + path.join(BUILDER_NODE_CLIENT_FOLDER_NAME, "index.js"),
       type: node,
     });
 
     fs.writeFileSync(
-      path.join(BUNDLER_CLIENT_TMP_SRC_DIRECTORY, "nodes", node, "index.js"),
+      path.join(BUILDER_CLIENT_TMP_SRC_DIRECTORY, "nodes", node, "index.js"),
       renderedJsEntrypoint,
       { encoding: "utf-8" },
     );
@@ -340,7 +358,7 @@ async function bundleClient(config: Config): Promise<void> {
       ...bundleOptions,
       entryPoints: [
         path.resolve(
-          BUNDLER_CLIENT_TMP_SRC_DIRECTORY,
+          BUILDER_CLIENT_TMP_SRC_DIRECTORY,
           "nodes",
           node,
           "index.js",
@@ -381,7 +399,11 @@ async function bundleClient(config: Config): Promise<void> {
     logger.verbose(`attach listener script using port ${config.dev.port}`);
     const refreshScriptTemplate = Handlebars.compile(
       fs.readFileSync(
-        path.resolve(BUILDER_TEMPLATES, "client", "refresh-script.handlebars"),
+        path.resolve(
+          BUILDER_TEMPLATES,
+          BUILDER_NODE_CLIENT_FOLDER_NAME,
+          "refresh-script.handlebars",
+        ),
         { encoding: "utf-8" },
       ),
     );
@@ -405,7 +427,10 @@ async function bundleIcons(): Promise<void> {
   logger.verbose("Determining nodes to process");
   const nodes = fs.readdirSync(path.resolve(SRC_DIRECTORY, "nodes"));
   logger.debug(JSON.stringify(nodes));
-  const iconsOutput = path.join(BUNDLER_TMP_DIST_DIRECTORY, "icons");
+  const iconsOutput = path.join(
+    BUILDER_TMP_DIST_DIRECTORY,
+    BUILDER_NODE_ICONS_FOLDER_NAME,
+  );
   logger.verbose(`Creating icons output folder: ${iconsOutput}`);
   fs.mkdirpSync(iconsOutput);
 
@@ -415,8 +440,8 @@ async function bundleIcons(): Promise<void> {
       SRC_DIRECTORY,
       "nodes",
       node,
-      "client",
-      "icons",
+      BUILDER_NODE_CLIENT_FOLDER_NAME,
+      BUILDER_NODE_ICONS_FOLDER_NAME,
     );
     const nodeIconsDirectoryFilepaths = await glob(
       `${nodeIconsDirectory}/*.{${BUILDER_ALLOWED_ICONS_FILE_EXTENSIONS.join(",")}}`,
@@ -424,7 +449,13 @@ async function bundleIcons(): Promise<void> {
     logger.debug(JSON.stringify(nodeIconsDirectoryFilepaths));
     if (nodeIconsDirectoryFilepaths.length) {
       fs.copySync(
-        path.resolve(SRC_DIRECTORY, "nodes", node, "client", "icons"),
+        path.resolve(
+          SRC_DIRECTORY,
+          "nodes",
+          node,
+          BUILDER_NODE_CLIENT_FOLDER_NAME,
+          BUILDER_NODE_ICONS_FOLDER_NAME,
+        ),
         iconsOutput,
       );
     }
@@ -437,19 +468,26 @@ async function bundleLocales(): Promise<void> {
   logger.verbose("Determining nodes to process");
   const nodes = fs.readdirSync(path.resolve(SRC_DIRECTORY, "nodes"));
   logger.debug(JSON.stringify(nodes));
-  const localesOutput = path.join(BUNDLER_TMP_DIST_DIRECTORY, "locales");
+  const localesOutput = path.join(
+    BUILDER_TMP_DIST_DIRECTORY,
+    BUILDER_NODE_LOCALES_FOLDER_NAME,
+  );
   logger.verbose(`Creating locales output folder: ${localesOutput}`);
   fs.mkdirpSync(localesOutput);
 
   logger.verbose("Loading locales handlebars template");
   const template = Handlebars.compile(
     fs.readFileSync(
-      path.join(BUILDER_TEMPLATES, "client", "locale.handlebars"),
+      path.join(
+        BUILDER_TEMPLATES,
+        BUILDER_NODE_CLIENT_FOLDER_NAME,
+        "locale.handlebars",
+      ),
       "utf-8",
     ),
   );
 
-  const dictionariesMap = new Map();
+  const labelsMap = new Map();
   for (const node of nodes) {
     logger.verbose(`Processing node: ${node}`);
 
@@ -458,9 +496,9 @@ async function bundleLocales(): Promise<void> {
       SRC_DIRECTORY,
       "nodes",
       node,
-      "client",
-      "i18n",
-      "docs",
+      BUILDER_NODE_CLIENT_FOLDER_NAME,
+      BUILDER_NODE_LOCALES_FOLDER_NAME,
+      BUILDER_NODE_LOCALES_DOCS_FOLDER_NAME,
     );
 
     const nodeDocsFilepaths = await glob(`${nodeDocsDirectory}/*.html`);
@@ -490,59 +528,57 @@ async function bundleLocales(): Promise<void> {
       );
     }
 
-    logger.verbose("Starting to process dictionaries");
-    const nodeDictionariesDirectory = path.resolve(
+    logger.verbose("Starting to process labels");
+    const nodeLabelsDirectory = path.resolve(
       SRC_DIRECTORY,
       "nodes",
       node,
-      "client",
-      "i18n",
-      "dictionaries",
+      BUILDER_NODE_CLIENT_FOLDER_NAME,
+      BUILDER_NODE_LOCALES_FOLDER_NAME,
+      BUILDER_NODE_LOCALES_LABELS_FOLDER_NAME,
     );
 
-    const nodeDictionariesFilepaths = await glob(
-      `${nodeDictionariesDirectory}/*.json`,
-    );
-    logger.debug(nodeDictionariesFilepaths);
+    const nodeLabelsFilepaths = await glob(`${nodeLabelsDirectory}/*.json`);
+    logger.debug(nodeLabelsFilepaths);
 
-    for (const nodeDictionaryFilepath of nodeDictionariesFilepaths) {
-      logger.verbose(`Processing file: ${nodeDictionaryFilepath}`);
+    for (const nodeLabelFilepath of nodeLabelsFilepaths) {
+      logger.verbose(`Processing file: ${nodeLabelFilepath}`);
       const language = path.basename(
-        nodeDictionaryFilepath,
-        path.extname(nodeDictionaryFilepath),
+        nodeLabelFilepath,
+        path.extname(nodeLabelFilepath),
       );
       const localeLanguageOutput = path.join(localesOutput, language);
       fs.mkdirpSync(localeLanguageOutput);
 
-      if (!dictionariesMap.has(language)) {
-        dictionariesMap.set(language, {
+      if (!labelsMap.has(language)) {
+        labelsMap.set(language, {
           data: {},
           path: localeLanguageOutput,
         });
       }
 
       const json = JSON.parse(
-        fs.readFileSync(nodeDictionaryFilepath, { encoding: "utf-8" }),
+        fs.readFileSync(nodeLabelFilepath, { encoding: "utf-8" }),
       );
 
-      const current = dictionariesMap.get(language);
-      dictionariesMap.set(language, {
+      const current = labelsMap.get(language);
+      labelsMap.set(language, {
         data: deepmerge({ [node]: json }, current.data),
         path: current.path,
       });
 
-      logger.debug(JSON.stringify(Array.from(dictionariesMap)));
+      logger.debug(JSON.stringify(Array.from(labelsMap)));
     }
   }
 
-  logger.verbose("Finished processing all dictionaries");
-  logger.debug(JSON.stringify(Array.from(dictionariesMap)));
+  logger.verbose("Finished processing all labels");
+  logger.debug(JSON.stringify(Array.from(labelsMap)));
 
-  for (const value of dictionariesMap.values()) {
-    const dictionaryFilePath = path.join(value.path, "index.json");
-    logger.verbose(`Writting dictionary to: ${dictionaryFilePath}`);
+  for (const value of labelsMap.values()) {
+    const labelFilePath = path.join(value.path, "index.json");
+    logger.verbose(`Writting label to: ${labelFilePath}`);
     logger.debug(JSON.stringify(value.data));
-    fs.writeFileSync(dictionaryFilePath, JSON.stringify(value.data), {
+    fs.writeFileSync(labelFilePath, JSON.stringify(value.data), {
       encoding: "utf-8",
     });
   }
@@ -559,7 +595,7 @@ async function build(config: Config): Promise<void> {
     bundleIcons(),
     bundleLocales(),
   ]);
-  fs.copySync(BUNDLER_TMP_DIST_DIRECTORY, DIST_DIRECTORY);
+  fs.copySync(BUILDER_TMP_DIST_DIRECTORY, DIST_DIRECTORY);
   logger.info("End build");
 }
 
