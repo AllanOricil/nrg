@@ -1,6 +1,6 @@
 {
   "name": "@allanoricil/nrg-core",
-  "version": "0.0.0-beta.22",
+  "version": "1.0.0",
   "description": "This package can be used to build Node-RED nodes made with the nrg cli.",
   "type": "module",
   "module": "dist/index.js",
@@ -25,13 +25,24 @@
     "prepare": "husky",
     "prepublishOnly": "npm run build"
   },
-  "author": "allanoricil <allanoricilcos@outlook.com>",
+  "author": {
+    "name": "AllanOricil",
+    "email": "allanoricil@duck.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AllanOricil/nrg"
+  },
+  "bugs": {
+    "url": "https://github.com/AllanOricil/nrg/issues"
+  },
+  "homepage": "https://github.com/AllanOricil/nrg#readme",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
   },
   "peerDependencies": {
-    "@allanoricil/node-red-node": "0.0.0-beta.15",
+    "@allanoricil/node-red-node": "1.0.0",
     "node-red": "4.0.2"
   },
   "dependencies": {
