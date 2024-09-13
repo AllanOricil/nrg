@@ -42,8 +42,8 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@allanoricil/node-red-node": "1.0.0",
-    "node-red": "4.0.2"
+    "@allanoricil/node-red-node": "^1.0.1",
+    "node-red": "^4.0.2"
   },
   "dependencies": {
     "@csstools/postcss-sass": "^5.1.1",
