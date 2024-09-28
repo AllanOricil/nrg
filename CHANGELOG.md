@@ -1,3 +1,15 @@
+# [1.2.0](https://github.com/AllanOricil/nrg/compare/v1.1.0...v1.2.0) (2024-09-28)
+
+
+### Bug Fixes
+
+* upgrade esbuild from 0.21.5 to 0.23.1 ([5faa505](https://github.com/AllanOricil/nrg/commit/5faa5057efc05707db575979e64fccb3dc7c3ec5))
+
+
+### Features
+
+* if package root can't be found, a .nrg folder is created in the users home directory ([d11f89c](https://github.com/AllanOricil/nrg/commit/d11f89cad27bface38b353e7158bb06ca45d5410))
+
 # [1.1.0](https://github.com/AllanOricil/nrg/compare/v1.0.1...v1.1.0) (2024-09-18)
 
 
