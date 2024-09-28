@@ -1,3 +1,5 @@
+import os from "os";
+import path from "path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getProjectRoot } from "../src/utils";
 import { packageDirectorySync } from "pkg-dir";
@@ -19,9 +21,12 @@ describe("getProjectRoot", () => {
     expect(result).toBe("/mock/project/root");
   });
 
-  it("should throw an error if the project root cannot be located", () => {
+  it("should default to user's home directory if package root can't be found", () => {
     (packageDirectorySync as vi.Mock).mockReturnValue(null);
 
-    expect(() => getProjectRoot()).toThrow("could not locate project's root");
+    const homeDir = os.homedir();
+    const projectRoot = getProjectRoot();
+
+    expect(projectRoot).toBe(path.resolve(homeDir));
   });
 });

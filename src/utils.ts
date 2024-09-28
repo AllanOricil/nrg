@@ -1,8 +1,13 @@
+import os from "os";
+import path from "path";
 import { packageDirectorySync } from "pkg-dir";
 
 function getProjectRoot() {
   const packageDirectory = packageDirectorySync();
-  if (!packageDirectory) throw new Error("could not locate project's root");
+  if (!packageDirectory) {
+    const homeDir = os.homedir();
+    return path.resolve(homeDir);
+  }
 
   return packageDirectory;
 }
