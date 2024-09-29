@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/AllanOricil/nrg/compare/v1.2.0...v1.2.1) (2024-09-29)
+
+
+### Bug Fixes
+
+* error: R] Could not resolve "./clientindex.js" when building in Windows ([5d11c00](https://github.com/AllanOricil/nrg/commit/5d11c00a02f549a9f75868bae430784c8a9c36c1))
+
 # [1.2.0](https://github.com/AllanOricil/nrg/compare/v1.1.0...v1.2.0) (2024-09-28)
 
 
