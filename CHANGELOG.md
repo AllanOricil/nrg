@@ -1,3 +1,10 @@
+## [1.2.3](https://github.com/AllanOricil/nrg/compare/v1.2.2...v1.2.3) (2024-09-29)
+
+
+### Bug Fixes
+
+* windows can't start node-red when using bash ([7704825](https://github.com/AllanOricil/nrg/commit/7704825b295c96305c3c9efe7348a5a703fa8768))
+
 ## [1.2.2](https://github.com/AllanOricil/nrg/compare/v1.2.1...v1.2.2) (2024-09-29)
 
 
