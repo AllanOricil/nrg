@@ -134,7 +134,7 @@ logger.verbose(`DIST_DIRECTORY: ${DIST_DIRECTORY}`);
 
 export const NODE_RED_EXECUTABLE: string = path.resolve(
   PROJECT_ROOT_DIRECTORY,
-  "node_modules/.bin/node-red",
+  "node_modules/node-red/red.js",
 );
 logger.verbose(`NODE_RED_EXECUTABLE: ${NODE_RED_EXECUTABLE}`);
 
