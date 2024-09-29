@@ -447,7 +447,7 @@ async function bundleClient(config: Config): Promise<void> {
     // NOTE: make this path using path and posix
     const nodeClientEntrypointPath =
       "./" + BUILDER_NODE_CLIENT_FOLDER_NAME + "/index.js";
-    logger.info(`RENDERED JS PATH: ${nodeClientEntrypointPath}`);
+    logger.verbose(`RENDERED JS PATH: ${nodeClientEntrypointPath}`);
     const renderedJsEntrypoint = entryPointTemplate({
       path: nodeClientEntrypointPath,
       type: node,
