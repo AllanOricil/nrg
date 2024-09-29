@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/AllanOricil/nrg/compare/v1.2.1...v1.2.2) (2024-09-29)
+
+
+### Bug Fixes
+
+* change log level verbose because this message is for debugging purposes only ([40a949a](https://github.com/AllanOricil/nrg/commit/40a949a78705f7cf8c80e9f2936b68dbac017033))
+
 ## [1.2.1](https://github.com/AllanOricil/nrg/compare/v1.2.0...v1.2.1) (2024-09-29)
 
 
