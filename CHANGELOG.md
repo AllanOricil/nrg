@@ -1,3 +1,13 @@
+## [1.2.4](https://github.com/AllanOricil/nrg/compare/v1.2.3...v1.2.4) (2024-10-01)
+
+
+### Bug Fixes
+
+* **vulnerability:** body-parser vulnerable to denial of service when url encoding is enabled ([c8ad9fb](https://github.com/AllanOricil/nrg/commit/c8ad9fb36b3ef8b7c33420745395ff00be3ab0e3))
+* **vulnerability:** fix DOM Clobbering Gadget found in rollup bundled scripts that leads to XSS ([214aeec](https://github.com/AllanOricil/nrg/commit/214aeecc0f6365765f57a91511deaf836359785d))
+* **vulnerability:** kangax html-minifier REDoS vulnerability ([e4d3007](https://github.com/AllanOricil/nrg/commit/e4d3007768018a810b6dc4ca14e390034b9d7785))
+* **vulnerability:** vite DOM Clobbering gadget found in vite bundled scripts that leads to XSS ([c0b3b63](https://github.com/AllanOricil/nrg/commit/c0b3b63d42111b5af4693d6b7791dd12cf918d46))
+
 ## [1.2.3](https://github.com/AllanOricil/nrg/compare/v1.2.2...v1.2.3) (2024-09-29)
 
 
