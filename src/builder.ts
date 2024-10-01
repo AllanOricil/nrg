@@ -5,7 +5,7 @@ import Handlebars from "handlebars";
 import deepmerge from "deepmerge";
 import { load } from "cheerio";
 import { RawSourceMap } from "source-map";
-import { minify } from "html-minifier";
+import { minify } from "html-minifier-terser";
 import { glob } from "glob";
 import postcss from "postcss";
 import prefixSelector from "postcss-prefix-selector";
@@ -185,7 +185,7 @@ async function processHtml(
   logger.debug(result);
   if (buildOptions.minify) {
     logger.verbose("Minifying html");
-    result = minify(result, {
+    result = await minify(result, {
       removeComments: true,
       removeEmptyAttributes: true,
       removeRedundantAttributes: true,
