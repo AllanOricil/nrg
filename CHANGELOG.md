@@ -1,3 +1,10 @@
+## [1.2.5](https://github.com/AllanOricil/nrg/compare/v1.2.4...v1.2.5) (2024-10-05)
+
+
+### Bug Fixes
+
+* build exceptions during watch mode won't kill the process anymore ([080352e](https://github.com/AllanOricil/nrg/commit/080352ec310315fd34bb3500fc5d5660ef30c290))
+
 ## [1.2.4](https://github.com/AllanOricil/nrg/compare/v1.2.3...v1.2.4) (2024-10-01)
 
 
