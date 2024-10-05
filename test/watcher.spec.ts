@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import fs from "fs-extra";
 import path from "path";
+import chalk from "chalk";
 import logger from "../src/logger";
 import { build } from "../src/builder";
 import { loadConfig } from "../src/config";
@@ -143,5 +144,24 @@ describe("startWatcher", () => {
     );
     expect(build).toHaveBeenCalledTimes(1);
     expect(startNodeRed).toHaveBeenCalledTimes(1);
+  });
+
+  it("should handle build exceptions", async () => {
+    // NOTE: Mock an error being thrown by the build function
+    const mockError = new Error("Mocked build error");
+    (build as vi.Mock).mockRejectedValue(mockError);
+
+    await startWatcher(config, configFilepath);
+
+    const callback = (fs.watch as vi.Mock).mock.calls[0][2];
+    callback("change", "somefile.js");
+
+    // NOTE: pass some time because of debounce
+    vi.runAllTimers();
+    // NOTE: wait all promises to be executed
+    await new Promise(process.nextTick);
+
+    expect(logger.info).toHaveBeenCalledWith(chalk.red(mockError.message));
+    expect(logger.info).toHaveBeenCalledWith(chalk.white(mockError.stack));
   });
 });
