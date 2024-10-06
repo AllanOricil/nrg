@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/AllanOricil/nrg/compare/v1.2.5...v1.3.0) (2024-10-06)
+
+
+### Features
+
+* change @allanoricil/node-red-node by @allanoricil/nrg-nodes ([eb7e157](https://github.com/AllanOricil/nrg/commit/eb7e15744440fbe958fccf74c0bf3479ad18c905))
+
 ## [1.2.5](https://github.com/AllanOricil/nrg/compare/v1.2.4...v1.2.5) (2024-10-05)
 
 
