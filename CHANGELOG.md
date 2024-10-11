@@ -1,3 +1,11 @@
+## [1.3.1](https://github.com/AllanOricil/nrg/compare/v1.3.0...v1.3.1) (2024-10-11)
+
+
+### Bug Fixes
+
+* package.json & package-lock.json to reduce vulnerabilities ([0414349](https://github.com/AllanOricil/nrg/commit/041434978d77fef797427822fa395102d9365235))
+* upgrade postcss from 8.4.45 to 8.4.47 ([20ad369](https://github.com/AllanOricil/nrg/commit/20ad3695ae96ea6c89aed0e2523ca3eb8588ffb3))
+
 # [1.3.0](https://github.com/AllanOricil/nrg/compare/v1.2.5...v1.3.0) (2024-10-06)
 
 
