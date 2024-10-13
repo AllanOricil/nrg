@@ -40,6 +40,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Zip dist
+        run: zip -r dist.zip dist
+
       - name: Attest
         uses: actions/attest-build-provenance@v1.4.3
         with:
@@ -58,3 +61,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          name: dist
+          path: dist.zip
