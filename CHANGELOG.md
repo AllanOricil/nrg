@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/AllanOricil/nrg/compare/v1.3.1...v1.4.0) (2024-10-13)
+
+
+### Features
+
+* html is now wrapped with text/html instead of text/x-red ([59d0336](https://github.com/AllanOricil/nrg/commit/59d0336b53630407373325c4080de93e917be537))
+
 ## [1.3.1](https://github.com/AllanOricil/nrg/compare/v1.3.0...v1.3.1) (2024-10-11)
 
 
