@@ -43,7 +43,7 @@
     "provenance": true
   },
   "peerDependencies": {
-    "@allanoricil/nrg-nodes": "^1.0.1",
+    "@allanoricil/nrg-nodes": "^1.1.0",
     "node-red": "^4.0.3"
   },
   "dependencies": {
