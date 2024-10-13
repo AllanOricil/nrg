@@ -1,3 +1,15 @@
+# [1.5.0](https://github.com/AllanOricil/nrg/compare/v1.4.0...v1.5.0) (2024-10-13)
+
+
+### Bug Fixes
+
+* add provenance to releases ([0e15566](https://github.com/AllanOricil/nrg/commit/0e155665c3c037316c5b6d7e48b6bf06f98b37d6))
+
+
+### Features
+
+* **deps:** bump @allanoricil/nrg-nodes from 1.0.1 to 1.1.0 ([d82a25d](https://github.com/AllanOricil/nrg/commit/d82a25d1c3b54098dc58e88481bd27f468d84a81))
+
 # [1.4.0](https://github.com/AllanOricil/nrg/compare/v1.3.1...v1.4.0) (2024-10-13)
 
 
