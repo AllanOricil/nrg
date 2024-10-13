@@ -39,7 +39,8 @@
   "homepage": "https://github.com/AllanOricil/nrg#readme",
   "license": "MIT",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "peerDependencies": {
     "@allanoricil/nrg-nodes": "^1.0.1",
