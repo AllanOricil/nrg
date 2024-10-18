@@ -27,7 +27,6 @@ function setupNodeRedDirectory(config: Config) {
   );
   const nodeRedSettings = deepmerge(config.nodeRed || {}, {
     userDir: NODE_RED_DIRECTORY,
-    // NOTE: this works, but it break locales https://github.com/node-red/node-red/issues/1604
     nodesDir: PROJECT_ROOT_DIRECTORY,
   });
   logger.verbose("Properties updated successfully");
