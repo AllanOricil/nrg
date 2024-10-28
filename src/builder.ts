@@ -17,10 +17,6 @@ import autoprefixer from "autoprefixer";
 // NOTE: was not able to make @csstoll/postcss-sass work with .sass file extension => dart-sass@v1.178.0
 // import postcssSassParser from "postcss-sass";
 import cssnano from "cssnano";
-
-import * as acorn from "acorn";
-import * as acornWalk from "acorn-walk";
-
 import { type Config } from "./config.js";
 import {
   PROJECT_ROOT_DIRECTORY,
@@ -60,106 +56,7 @@ function setup() {
   logger.info("Setup complete");
 }
 
-function fetchNodeCategory(node: string) {
-  const clientJsPath = path.resolve(
-    BUILDER_CLIENT_TMP_SRC_DIRECTORY,
-    "nodes",
-    node,
-    BUILDER_NODE_CLIENT_FOLDER_NAME,
-    "index.js",
-  );
-  const clientJsModule = fs.readFileSync(clientJsPath, { encoding: "utf-8" });
-  const ast = acorn.parse(clientJsModule, {
-    sourceType: "module",
-    ecmaVersion: "latest",
-  });
-
-  let category: string = "";
-  acornWalk.simple(ast, {
-    ExportDefaultDeclaration(node) {
-      if (node.declaration.type === "ObjectExpression") {
-        node.declaration.properties.forEach((prop) => {
-          if (prop.type === "Property" && prop.key.type === "Identifier") {
-            if (prop.key.name === "category") {
-              if (
-                prop.value.type === "Literal" &&
-                typeof prop.value.value === "string"
-              ) {
-                category = prop.value.value;
-              } else {
-                console.log("Category is not a simple literal:", prop.value);
-              }
-            }
-          }
-        });
-      }
-    },
-  });
-  if (!category) {
-    throw new Error(
-      "Could not identify the node's category. Please, add category attribute in the node's client javascript.",
-    );
-  }
-  return category;
-}
-
-// TODO: investigate if this could be improved if implemented with cherio parser
-async function replaceCustomHtmlAttributes(html: string, node: string) {
-  const category = fetchNodeCategory(node);
-  const inputPrefix =
-    category === "config" ? "node-config-input" : "node-input";
-
-  const pattern =
-    /(?:\s*(i18n:([a-zA-Z0-9_-]*))\s*=\s*"([^"]*)")|(?:\s*(id|for)\s*:=\s*"([^"]*)")/g;
-
-  const updatedHtml = html.replace(
-    /<([a-zA-Z][a-zA-Z0-9-_]*)\s*([^>]*)\/?>/gi,
-    (elementMatch: string, tagName: string, tagAttributes: string) => {
-      const i18nAttributes: string[] = [];
-      let newAttributes = tagAttributes;
-
-      newAttributes = newAttributes.replace(
-        pattern,
-        (
-          match: string,
-          i18nAttr: string,
-          i18nModifier: string,
-          i18nValue: string,
-          attrName: string,
-          attrValue: string,
-        ) => {
-          if (i18nAttr) {
-            i18nAttributes.push(
-              i18nModifier
-                ? `[${i18nModifier}]${node}.${i18nValue}`
-                : `${node}.${i18nValue}`,
-            );
-            return "";
-          } else if (attrName) {
-            const newValue = `${inputPrefix}-${attrValue}`;
-            return `${attrName}="${newValue}"`;
-          }
-          return match;
-        },
-      );
-
-      if (i18nAttributes.length > 0) {
-        const dataI18nAttr = `data-i18n="${i18nAttributes.join(";")}"`;
-        return `<${tagName} ${newAttributes} ${dataI18nAttr}>`;
-      }
-
-      return `<${tagName} ${newAttributes}>`;
-    },
-  );
-
-  return updatedHtml;
-}
-
-// TODO: validate html elements based on Node-RED's schema for an element, and throw an error in case there is something wrong.
-async function processHtml(
-  buildOptions: BuildOptions,
-  node: string,
-): Promise<string> {
+function processHtml(buildOptions: BuildOptions, node: string): string {
   logger.verbose(`Processing html for node: ${node}`);
   const htmlFilePath = path.resolve(
     BUILDER_CLIENT_TMP_SRC_DIRECTORY,
@@ -169,11 +66,8 @@ async function processHtml(
     "index.html",
   );
   logger.verbose(`Loading html from ${htmlFilePath}`);
-  let html = fs.readFileSync(htmlFilePath, { encoding: "utf-8" });
+  const html = fs.readFileSync(htmlFilePath, { encoding: "utf-8" });
   logger.verbose("html file loaded");
-  logger.debug(html);
-  logger.verbose("replacing custom html attributes");
-  html = await replaceCustomHtmlAttributes(html, node);
   logger.debug(html);
   logger.verbose("parsing html");
   const $ = load(html, null, false);
@@ -481,7 +375,7 @@ async function bundleClient(config: Config): Promise<void> {
     await bundleJavascript(bundlerConfig);
 
     logger.verbose("Rendering client form");
-    const html = await processHtml(bundlerConfig, node);
+    const html = processHtml(bundlerConfig, node);
 
     logger.verbose("Rendering client stylesheets");
     const stylesheets = await processStylesheets(bundlerConfig, node);

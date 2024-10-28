@@ -48,8 +48,6 @@
   },
   "dependencies": {
     "@csstools/postcss-sass": "^5.1.1",
-    "acorn": "^8.12.1",
-    "acorn-walk": "^8.3.4",
     "autoprefixer": "^10.4.20",
     "chalk": "^5.3.0",
     "cheerio": "^1.0.0",
