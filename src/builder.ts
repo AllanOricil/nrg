@@ -56,7 +56,7 @@ function setup() {
   logger.info("Setup complete");
 }
 
-function processHtml(buildOptions: BuildOptions, node: string): string {
+async function processHtml(buildOptions: BuildOptions, node: string): string {
   logger.verbose(`Processing html for node: ${node}`);
   const htmlFilePath = path.resolve(
     BUILDER_CLIENT_TMP_SRC_DIRECTORY,
@@ -375,7 +375,7 @@ async function bundleClient(config: Config): Promise<void> {
     await bundleJavascript(bundlerConfig);
 
     logger.verbose("Rendering client form");
-    const html = processHtml(bundlerConfig, node);
+    const html = await processHtml(bundlerConfig, node);
 
     logger.verbose("Rendering client stylesheets");
     const stylesheets = await processStylesheets(bundlerConfig, node);
