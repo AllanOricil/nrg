@@ -1,3 +1,17 @@
+## [1.5.1](https://github.com/AllanOricil/nrg/compare/v1.5.0...v1.5.1) (2024-10-28)
+
+
+### Bug Fixes
+
+* await can only be used inside an async function ([0e2e543](https://github.com/AllanOricil/nrg/commit/0e2e543c9db2d49568692bed846b25979876697f))
+* error TS1064 ([09f7fc4](https://github.com/AllanOricil/nrg/commit/09f7fc479eb987ac1af086954bb7204a4c8f3771))
+* upgrade esbuild from 0.23.1 to 0.24.0 ([3c8c81b](https://github.com/AllanOricil/nrg/commit/3c8c81b6b4f0e2fca46f4996ef1b332735fbebd7))
+
+
+### Reverts
+
+* feat: add custom html attributes id: for: i18n: ([3c4ff6b](https://github.com/AllanOricil/nrg/commit/3c4ff6bb84eb98f61a697b8dd9018142e84a255a))
+
 # [1.5.0](https://github.com/AllanOricil/nrg/compare/v1.4.0...v1.5.0) (2024-10-13)
 
 
