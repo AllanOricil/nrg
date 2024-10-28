@@ -56,7 +56,10 @@ function setup() {
   logger.info("Setup complete");
 }
 
-async function processHtml(buildOptions: BuildOptions, node: string): string {
+async function processHtml(
+  buildOptions: BuildOptions,
+  node: string,
+): Promise<string> {
   logger.verbose(`Processing html for node: ${node}`);
   const htmlFilePath = path.resolve(
     BUILDER_CLIENT_TMP_SRC_DIRECTORY,
