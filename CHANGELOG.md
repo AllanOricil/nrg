@@ -1,3 +1,10 @@
+## [1.5.2](https://github.com/AllanOricil/nrg/compare/v1.5.1...v1.5.2) (2024-11-02)
+
+
+### Bug Fixes
+
+* **deps:** bump @allanoricil/nrg-nodes from 1.1.0 to 1.1.1 ([0f2060f](https://github.com/AllanOricil/nrg/commit/0f2060f659f12656ed2ebf8a0605e6cb1f5df87c))
+
 ## [1.5.1](https://github.com/AllanOricil/nrg/compare/v1.5.0...v1.5.1) (2024-10-28)
 
 
