@@ -1,3 +1,2 @@
-# @nrg/core
-
-This package can be used to build Node-RED nodes made with the nrg cli.
+> [!NOTE]
+> Deprecated. Head over to https://github.com/bonsaedev/nrg
